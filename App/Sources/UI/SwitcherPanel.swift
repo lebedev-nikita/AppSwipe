@@ -147,7 +147,14 @@ final class SwitcherPanel {
 }
 
 private final class ItemView: NSView {
+    /// Share of an app icon's canvas that its artwork covers: 824 of 1024 points on Apple's icon grid.
+    private static let artworkFraction: CGFloat = 0.805
+    /// Corner radius of the icon shape, relative to the artwork's size.
+    private static let cornerFraction: CGFloat = 0.225
+    private static let outlineWidth: CGFloat = 2
+
     private let imageView: NSImageView
+    private let outlineView = NSView()
     private let iconSize: CGFloat
     private let badgeView = BadgeView()
 
@@ -166,18 +173,18 @@ private final class ItemView: NSView {
     init(image: NSImage, iconSize: CGFloat) {
         imageView = NSImageView(image: image)
         imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.wantsLayer = true
         self.iconSize = iconSize
         super.init(frame: .zero)
+        outlineView.wantsLayer = true
+        outlineView.layer?.cornerCurve = .continuous
+        outlineView.isHidden = true
         addSubview(imageView)
+        addSubview(outlineView)
         addSubview(badgeView)
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
-
-    /// Share of an app icon's canvas that its artwork covers: 824 of 1024 points on Apple's icon grid.
-    private static let artworkFraction: CGFloat = 0.805
 
     override func layout() {
         super.layout()
@@ -186,28 +193,27 @@ private final class ItemView: NSView {
             x: (bounds.width - canvas) / 2, y: (bounds.height - canvas) / 2, width: canvas, height: canvas)
         let icon = NSRect(
             x: (bounds.width - iconSize) / 2, y: (bounds.height - iconSize) / 2, width: iconSize, height: iconSize)
+        // The outline wraps the icon shape from outside, touching its edge.
+        let width = Self.outlineWidth
+        outlineView.frame = icon.insetBy(dx: -width, dy: -width)
+        outlineView.layer?.cornerRadius = iconSize * Self.cornerFraction + width
+        outlineView.layer?.borderWidth = width
         // Like the Dock, the badge sits over the icon's top-right corner.
-        let height = (iconSize * 0.44).rounded()
-        let width = max(height, badgeView.textWidth(forHeight: height) + height * 0.6)
+        let badgeHeight = (iconSize * 0.44).rounded()
+        let badgeWidth = max(badgeHeight, badgeView.textWidth(forHeight: badgeHeight) + badgeHeight * 0.6)
         let center = NSPoint(x: icon.maxX - iconSize * 0.11, y: icon.maxY - iconSize * 0.09)
         badgeView.frame = NSRect(
-            x: min(center.x - height / 2, bounds.maxX - width), y: center.y - height / 2,
-            width: width, height: height)
+            x: min(center.x - badgeHeight / 2, bounds.maxX - badgeWidth), y: center.y - badgeHeight / 2,
+            width: badgeWidth, height: badgeHeight)
         badgeView.isHidden = badgeView.text == nil
     }
 
-    /// The Selection is a thin shadow that hugs the icon's own outline.
+    /// The Selection is a hard outline around the icon shape.
     private func updateSelection() {
-        guard isSelected else {
-            imageView.shadow = nil
-            return
-        }
+        outlineView.isHidden = !isSelected
+        guard isSelected else { return }
         let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let shadow = NSShadow()
-        shadow.shadowOffset = .zero
-        shadow.shadowBlurRadius = max(2, (iconSize * 0.045).rounded())
-        shadow.shadowColor = isDark ? .white : .black
-        imageView.shadow = shadow
+        outlineView.layer?.borderColor = (isDark ? NSColor.white : NSColor.black).withAlphaComponent(0.85).cgColor
     }
 }
 

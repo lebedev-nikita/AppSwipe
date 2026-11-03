@@ -24,7 +24,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 
 ### Shared behaviour
 
-- The Selection is a thin shadow that outlines the selected icon or preview.
+- The Selection is a thin hard outline around the selected icon or preview.
 - If the list has a single Item, the Switcher still opens, so the user sees that the gesture registered. With no windows at all, the Window Switcher shows a "No windows" placeholder.
 - Window Previews come from ScreenCaptureKit and may be slightly stale. A preview is captured when the Switcher opens, or the last time the window was visible, and is cached.
 - Without Screen Recording permission, each preview is replaced by the app icon and the window title.
