@@ -393,6 +393,7 @@ final class SwitchController {
         case .windows(let app, let windows):
             WindowActivator.raise(windows[item], of: app)
         }
+        cursor.reassertHidden()
         session.inFront = item
     }
 
