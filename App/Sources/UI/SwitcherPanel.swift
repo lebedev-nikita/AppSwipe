@@ -21,6 +21,7 @@ final class SwitcherPanel {
         /// From the title's baseline to the bottom of the panel.
         static let bottomPadding: CGFloat = 6
 
+        /// Size of an icon's visible artwork, without the transparent margins around it.
         let icon: CGFloat
         var cell: CGFloat { (icon * 1.3).rounded() }
         var horizontalPadding: CGFloat { (icon * 0.18).rounded() }
@@ -174,11 +175,16 @@ private final class ItemView: NSView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
+    /// Share of an app icon's canvas that its artwork covers: 824 of 1024 points on Apple's icon grid.
+    private static let artworkFraction: CGFloat = 0.805
+
     override func layout() {
         super.layout()
+        let canvas = (iconSize / Self.artworkFraction).rounded()
+        imageView.frame = NSRect(
+            x: (bounds.width - canvas) / 2, y: (bounds.height - canvas) / 2, width: canvas, height: canvas)
         let icon = NSRect(
             x: (bounds.width - iconSize) / 2, y: (bounds.height - iconSize) / 2, width: iconSize, height: iconSize)
-        imageView.frame = icon
         // Like the Dock, the badge sits over the icon's top-right corner.
         let height = (iconSize * 0.44).rounded()
         let width = max(height, badgeView.textWidth(forHeight: height) + height * 0.6)
