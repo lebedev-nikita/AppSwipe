@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             switchController.preview(.windows, selection: windowPreview, of: app)
         }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
+        if UserDefaults.standard.bool(forKey: "ThemeTest") { switchController.themeTest() }
         if UserDefaults.standard.bool(forKey: "GlassTest") {
             switchController.glassTest(native: UserDefaults.standard.bool(forKey: "GlassTestNative"))
         }

@@ -71,8 +71,15 @@ final class SwitcherPanel {
         }
     }
 
+    /// White over the glass, per theme, measured against the native switcher's brightness.
+    private static let veilLight: CGFloat = 0.30
+    private static let veilDark: CGFloat = 0.12
+
     private let panel: NSPanel
     private let glass = NSGlassEffectView()
+    private let content = NSView()
+    /// Sets the glass's brightness per theme; see `applyTheme`.
+    private let veil = NSView()
     private let scrollView = NSScrollView()
     private let row = NSView()
     private let titleField = NSTextField(labelWithString: "")
@@ -95,9 +102,13 @@ final class SwitcherPanel {
         panel.animationBehavior = .none
 
         GlassMaterial.useSwitcherMaterial(for: glass)
-        let content = NSView()
         glass.contentView = content
         panel.contentView = glass
+
+        veil.wantsLayer = true
+        veil.layer?.cornerCurve = .continuous
+        veil.autoresizingMask = [.width, .height]
+        content.addSubview(veil)
 
         scrollView.drawsBackground = false
         scrollView.hasHorizontalScroller = false
@@ -143,12 +154,26 @@ final class SwitcherPanel {
         let size = NSSize(width: visibleRowWidth + 2 * edge, height: metrics.padding + height + bottom)
         scrollView.frame = NSRect(x: edge, y: bottom, width: visibleRowWidth, height: height)
         glass.cornerRadius = metrics.panelCornerRadius
+        veil.layer?.cornerRadius = metrics.panelCornerRadius
         let frame = screen.frame
         panel.setFrame(
             NSRect(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2,
                    width: size.width, height: size.height).integral,
             display: false)
+        veil.frame = content.bounds
+        applyTheme()
         select(selection)
+    }
+
+    /// The glass material darkens what is behind it in the light appearance and brightens it in the dark
+    /// one, the opposite of the native switcher. So the glass always renders in the light appearance,
+    /// a veil sets its brightness per theme, and the Items and title follow the system's theme.
+    private func applyTheme() {
+        let theme = panel.effectiveAppearance
+        let isDark = theme.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        glass.appearance = NSAppearance(named: .aqua)
+        content.appearance = theme
+        veil.layer?.backgroundColor = NSColor.white.withAlphaComponent(isDark ? Self.veilDark : Self.veilLight).cgColor
     }
 
     func setPreview(_ preview: CGImage, at index: Int) {
@@ -184,10 +209,23 @@ final class SwitcherPanel {
     }
 
     func show() {
+        applyTheme()
         panel.orderFrontRegardless()
     }
 
     var frame: NSRect { panel.frame }
+
+    #if DEBUG
+    /// Overrides the system appearance, for comparing themes.
+    func setAppearance(_ appearance: NSAppearance?) {
+        panel.appearance = appearance
+    }
+
+    func setGlassVariant(_ variant: Int, values: [String: Int] = [:]) {
+        glass.setValue(variant, forKey: "_variant")
+        for (key, value) in values { glass.setValue(value, forKey: key) }
+    }
+    #endif
 
     func hide() {
         panel.orderOut(nil)

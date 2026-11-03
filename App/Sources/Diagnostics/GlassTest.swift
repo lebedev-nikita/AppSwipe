@@ -7,7 +7,8 @@ import AppKit
 final class GlassTestBackdrop {
     private let window: NSWindow
 
-    init(size: NSSize) {
+    /// With `flat`, a plain colour instead of the high-contrast pattern.
+    init(size: NSSize, flat: NSColor? = nil) {
         let screen = NSScreen.screens[0].frame
         window = NSWindow(
             contentRect: NSRect(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2,
@@ -16,7 +17,14 @@ final class GlassTestBackdrop {
         // Above normal windows, below both switchers.
         window.level = .floating
         window.ignoresMouseEvents = true
-        window.contentView = PatternView()
+        if let flat {
+            let view = NSView()
+            view.wantsLayer = true
+            view.layer?.backgroundColor = flat.cgColor
+            window.contentView = view
+        } else {
+            window.contentView = PatternView()
+        }
     }
 
     /// The window's frame in the top-left-origin coordinates `screencapture -R` takes.

@@ -250,6 +250,49 @@ final class SwitchController {
                 + "\(Int(frame.width)),\(Int(frame.height))")
     }
 
+    /// Shows the App Switcher in the light and then the dark appearance over a flat backdrop the colour
+    /// of a photo, on a fixed timeline that a script captures.
+    func themeTest() {
+        let white = UserDefaults.standard.bool(forKey: "ThemeTestWhite")
+        let backdrop = GlassTestBackdrop(
+            size: NSSize(width: 1100, height: 440),
+            flat: white ? NSColor(white: 0.99, alpha: 1) : NSColor(red: 0.42, green: 0.29, blue: 0.2, alpha: 1))
+        Task {
+            backdrop.show()
+            DiagnosticLog.write("theme test: start, rect \(backdrop.captureRect)")
+            try? await Task.sleep(for: .seconds(0.8))
+            // "6;6:_scrimState=1" tries variant 6 alone, then with the scrim state set.
+            let configs = (UserDefaults.standard.string(forKey: "ThemeTestConfigs") ?? "\(GlassMaterial.variant)")
+                .split(separator: ";").map(String.init)
+            for (index, config) in configs.enumerated() {
+                let parts = config.split(separator: ":")
+                let variant = Int(parts[0]) ?? GlassMaterial.variant
+                let values = parts.dropFirst().first.map { list in
+                    Dictionary(uniqueKeysWithValues: list.split(separator: ",").compactMap { pair -> (String, Int)? in
+                        let kv = pair.split(separator: "=")
+                        return kv.count == 2 ? (String(kv[0]), Int(kv[1]) ?? 0) : nil
+                    })
+                } ?? [:]
+                for name in [NSAppearance.Name.aqua, .darkAqua] {
+                    appPanel.setAppearance(NSAppearance(named: name))
+                    appPanel.setGlassVariant(variant, values: values)
+                    prepareApps()
+                    appPanel.select(2)
+                    appPanel.show()
+                    try? await Task.sleep(for: .seconds(0.35))
+                    DiagnosticLog.write("theme test: showing \(index)-\(name.rawValue)")
+                    try? await Task.sleep(for: .seconds(0.25))
+                    appPanel.hide()
+                    try? await Task.sleep(for: .seconds(0.1))
+                }
+            }
+            appPanel.setGlassVariant(GlassMaterial.variant, values: ["_scrimState": 0, "_subduedState": 0, "_adaptiveAppearance": 2])
+            appPanel.setAppearance(nil)
+            backdrop.hide()
+            DiagnosticLog.write("theme test: done")
+        }
+    }
+
     /// Shows the App Switcher over a test backdrop, then, with `native`, the native Cmd-Tab switcher,
     /// on a fixed timeline that a script captures.
     func glassTest(native: Bool) {
