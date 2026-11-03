@@ -6,7 +6,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 
 ### App Switcher (three fingers by default)
 
-- Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting can also leave out Finder while it has no windows; minimized windows and windows on other Spaces count, the desktop doesn't, and Finder stays when it is the Active App.
+- Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting, on by default, leaves out Finder while it has no windows; minimized windows and windows on other Spaces count, the desktop doesn't, and Finder stays when it is the Active App.
 - Order: most recently used first, so the Active App is the Current Item.
 - Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
 - Commit activates the app, brings all its windows forward, and unhides it if hidden. If the app has no visible window, Commit behaves like a click on its Dock icon: it restores the most recent minimized window, or lets the app open a new one.
@@ -47,6 +47,19 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 6. The cursor stays still for the whole session and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was.
 7. The Switcher appears the moment the session opens. Lifting the fingers within about 200 ms of that is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 62–133 ms from opening to lift, while deliberate swipes took 480–660 ms.
 
+### Live Switching
+
+With **Live Switching** on, there is no waiting for the fingers to lift: the selected Item is activated the moment the Selection lands on it, starting with the second Item when the session opens. It works the same in both Switchers.
+
+- While the Selection passes over Items, activation is plain:
+  - an app without windows becomes active without opening one;
+  - a hidden app is not activated;
+  - a window is raised, and a minimized window stays minimized.
+- On Commit, the selected Item gets the full treatment: an app opens like a Dock click and unhides; a window un-minimizes.
+- Quick Switch still applies.
+- Cancel, by lifting on the Current Item or pressing Esc, activates the Active App again.
+- Only the final Item counts as used: it moves to the front of the order, the Active App becomes second, and the Items passed over keep their places. The native Cmd-Tab order may still record them.
+
 Constraints:
 
 - v1 has no other actions during a session: no quit, hide, or close, and no opening an app's windows from the App Switcher. Vertical finger movement is reserved for such actions later.
@@ -69,7 +82,8 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
-- Hide Finder from the App Switcher while it has no windows. Off by default, like the native switcher.
+- Hide Finder from the App Switcher while it has no windows. On by default.
+- Live Switching, described below. Off by default.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews.
 - Gesture conflicts, described below.
 - Diagnostics: recording touches, and showing the logs, for bug reports.
@@ -127,7 +141,7 @@ The interface is in English, with a Russian localization.
 4. Window Switcher with app icon and title in place of previews.
 5. Window Previews.
 6. Settings, gesture conflicts, permission status, launch at login.
-7. Live Switching: switching as the Selection moves, without waiting for the fingers to lift. Design in progress.
+7. Live Switching.
 
 ## Spike findings
 

@@ -58,6 +58,10 @@ _Avoid_: Confirm, release, accept
 Ending a Switch Session without switching: lifting the fingers with the Current Item selected, or pressing Esc.
 _Avoid_: Abort, dismiss
 
+**Live Switching**:
+A mode in which the selected Item is activated the moment the Selection lands on it, before Commit.
+_Avoid_: Instant switching, preview mode
+
 **Quick Switch**:
 A Switch Session whose fingers lift within about 200 ms of its start. It always Commits to the second Item, the counterpart of a quick Cmd-Tab tap.
 _Avoid_: Flick, quick tap
