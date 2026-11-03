@@ -68,6 +68,8 @@ final class SwitchController {
     private var contentsCount = 0
     private var windowContents: WindowContents?
     private var session: Session?
+    /// The fingers whose landing froze the pointer, while no session has opened yet.
+    private var armedFingers: Int?
     /// A swipe over the Step trial strip in Settings, which moves its dots instead of a Switcher.
     private var trialSession: SwitchSession?
     /// Dock badges by app bundle path, from the previous refresh, shown until fresh ones arrive.
@@ -112,9 +114,11 @@ final class SwitchController {
     }
 
     func handle(_ frame: TouchFrame) {
+        if let armedFingers, frame.fingersDown.count < armedFingers { disarm() }
         switch recognizer.handle(frame) {
         case .armed(let fingers):
             guard session == nil else { return }
+            arm(fingers)
             switch preferences.switcher(forFingers: fingers) {
             case .apps:
                 if let contents, clock.now - contents.preparedAt < Self.appContentsLifetime,
@@ -135,9 +139,7 @@ final class SwitchController {
                 trial.selection = trialSession?.selection
                 return
             }
-            guard !preferences.isPaused, !screenLock.isLocked, !preferences.isExcluded(appOrder.frontmost),
-                  let kind = preferences.switcher(forFingers: fingers)
-            else { return }
+            guard sessionsAllowed, let kind = preferences.switcher(forFingers: fingers) else { return }
             begin(kind, direction: direction, at: time)
         case .moved(let travel):
             if var trialSession {
@@ -153,11 +155,38 @@ final class SwitchController {
             if trialSession != nil {
                 trialSession = nil
                 trial.selection = nil
+                disarm()
                 return
             }
             end(at: time)
         case nil:
             break
+        }
+    }
+
+    /// Whether swipes may open a Switcher now.
+    private var sessionsAllowed: Bool {
+        !preferences.isPaused && !screenLock.isLocked && !preferences.isExcluded(appOrder.frontmost)
+    }
+
+    /// Freezes the pointer when fingers that can open a Switcher land, so the swipe never moves it.
+    private func arm(_ fingers: Int) {
+        guard trial.isUnderPointer || (sessionsAllowed && preferences.switcher(forFingers: fingers) != nil) else {
+            disarm()
+            return
+        }
+        armedFingers = fingers
+        cursor.freeze()
+        inputTap.mode = .fingersDown
+    }
+
+    /// Lets the pointer move again after fingers lift without opening a session.
+    private func disarm() {
+        guard armedFingers != nil else { return }
+        armedFingers = nil
+        if session == nil {
+            inputTap.mode = .off
+            cursor.release()
         }
     }
 
@@ -202,7 +231,7 @@ final class SwitchController {
             return
         }
         begin(kind, direction: .right, at: ProcessInfo.processInfo.systemUptime)
-        inputTap.isEnabled = false
+        inputTap.mode = .off
         guard let session else { return }
         session.panel.select(selection)
         logPanelFrame(session.panel)
@@ -336,9 +365,11 @@ final class SwitchController {
             itemCount: targets.count, direction: direction, began: time, settings: sessionSettings)
         panel.select(selection.selection)
         panel.show()
+        // Usually already frozen where the fingers landed.
         cursor.freeze()
         cursor.hide()
-        inputTap.isEnabled = true
+        inputTap.mode = .session
+        armedFingers = nil
         var session = Session(targets: targets, panel: panel, selection: selection)
         if preferences.liveSwitching {
             session.passable = Self.passableItems(targets)
@@ -438,7 +469,7 @@ final class SwitchController {
         self.session = nil
         session.panel.hide()
         cursor.release()
-        inputTap.isEnabled = false
+        inputTap.mode = .off
         // The app list may have changed while the panel was showing.
         if contents == nil { appsChanged() }
         return session

@@ -1,16 +1,19 @@
 import CoreGraphics
 
-/// Keeps the cursor still for a whole Switch Session, and hidden while the Switcher shows.
+/// Keeps the cursor still from the moment the fingers land until they lift, and hidden while a
+/// Switcher shows.
 ///
-/// `SessionInputTap` swallows mouse movement during the session; this puts the cursor back in case
-/// it moved anyway, and handles hiding.
+/// `SessionInputTap` swallows pointer movement meanwhile; this puts the cursor back where the fingers
+/// landed in case it moved anyway, and handles hiding.
 @MainActor
 final class CursorFreeze {
     private var position: CGPoint?
     private var isHidden = false
     private var allowedHiding = false
 
+    /// Remembers where the cursor is. Later calls keep the first position until `release`.
     func freeze() {
+        guard position == nil else { return }
         position = CGEvent(source: nil)?.location
     }
 

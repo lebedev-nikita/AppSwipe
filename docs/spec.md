@@ -44,7 +44,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
    - Direction ignores the natural-scrolling setting.
 4. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.
 5. **Cancel** means committing while the Current Item is selected, or pressing Esc.
-6. The cursor stays still for the whole session and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was.
+6. The cursor stays still from the moment the fingers land, and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was. Clicks and Force Clicks during a session don't reach the app under the cursor.
 7. The Switcher appears the moment the session opens. Lifting the fingers within about 200 ms of that is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 62–133 ms from opening to lift, while deliberate swipes took 480–660 ms.
 
 ### Live Switching
