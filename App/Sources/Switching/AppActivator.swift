@@ -4,6 +4,12 @@ import AppKit
 /// unhides, and restores or opens a window if none is visible.
 @MainActor
 enum AppActivator {
+    /// Brings the app forward without anything a Dock click adds: no window opens or un-minimizes.
+    /// For apps the Selection passes over during Live Switching.
+    static func bringForward(_ app: NSRunningApplication) {
+        app.activate(options: .activateAllWindows)
+    }
+
     static func activate(_ app: NSRunningApplication) {
         guard let url = app.bundleURL else {
             app.activate()

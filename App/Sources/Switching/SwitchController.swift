@@ -16,7 +16,13 @@ final class SwitchController {
     private struct Session {
         let apps: [NSRunningApplication]
         var selection: SwitchSession
+        /// Apps Live Switching may bring forward while passing over them; nil without Live Switching.
+        var passable: Set<pid_t>?
+        /// The Item Live Switching last brought forward.
+        var inFront = 0
     }
+
+    static let liveSwitchingKey = "LiveSwitching"
 
     /// Rebuild contents older than this when fingers land, in case something changed unnoticed, such
     /// as an app's icon.
@@ -73,8 +79,9 @@ final class SwitchController {
             begin(direction: direction, at: time)
         case .moved(let travel):
             guard var session, session.selection.move(travel: travel) else { return }
-            self.session = session
             panel.select(session.selection.selection)
+            bringForward(session.selection.selection, in: &session)
+            self.session = session
         case .ended(let time):
             end(at: time)
         case nil:
@@ -168,7 +175,13 @@ final class SwitchController {
         cursor.freeze()
         cursor.hide()
         inputTap.isEnabled = true
-        session = Session(apps: contents.apps, selection: selection)
+        var session = Session(apps: contents.apps, selection: selection)
+        if UserDefaults.standard.bool(forKey: Self.liveSwitchingKey) {
+            session.passable = Self.passableApps(contents.apps)
+            appOrder.freeze()
+            bringForward(selection.selection, in: &session)
+        }
+        self.session = session
         #if DEBUG
         DiagnosticLog.write(
             "timing: event age \(Self.milliseconds(eventAge)) ms, "
@@ -205,18 +218,54 @@ final class SwitchController {
         }
     }
 
+    /// Live Switching: brings the selected app forward, unless it is hidden or has windows only where
+    /// activating it would jump to another Space or do nothing visible. The Active App always comes back.
+    private func bringForward(_ item: Int, in session: inout Session) {
+        guard let passable = session.passable, item != session.inFront, session.apps.indices.contains(item) else { return }
+        let app = session.apps[item]
+        guard item == 0 || (passable.contains(app.processIdentifier) && !app.isHidden) else { return }
+        AppActivator.bringForward(app)
+        session.inFront = item
+    }
+
+    /// Apps with a window on the Current Space, or with no windows at all. The others have only
+    /// minimized windows or windows on other Spaces.
+    private static func passableApps(_ apps: [NSRunningApplication]) -> Set<pid_t> {
+        let windows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        var onScreen: Set<pid_t> = []
+        var withWindows: Set<pid_t> = []
+        for window in windows where window[kCGWindowLayer as String] as? Int == 0 {
+            guard let pid = window[kCGWindowOwnerPID as String] as? pid_t,
+                  let bounds = window[kCGWindowBounds as String] as? [String: CGFloat],
+                  (bounds["Width"] ?? 0) > 50, (bounds["Height"] ?? 0) > 50
+            else { continue }
+            withWindows.insert(pid)
+            if window[kCGWindowIsOnscreen as String] as? Bool == true { onScreen.insert(pid) }
+        }
+        return Set(apps.map(\.processIdentifier).filter { onScreen.contains($0) || !withWindows.contains($0) })
+    }
+
     private func end(at time: Double) {
         guard let session = finish() else { return }
         switch session.selection.outcome(endedAt: time) {
         case .activate(let item):
             AppActivator.activate(session.apps[item])
+            if session.passable != nil { appOrder.unfreeze(final: session.apps[item].processIdentifier) }
         case .cancel:
-            break
+            restoreActiveApp(after: session)
         }
     }
 
     private func cancel() {
-        finish()
+        guard let session = finish() else { return }
+        restoreActiveApp(after: session)
+    }
+
+    private func restoreActiveApp(after session: Session) {
+        guard session.passable != nil else { return }
+        if session.inFront != 0, let active = session.apps.first { AppActivator.bringForward(active) }
+        appOrder.unfreeze(final: nil)
     }
 
     @discardableResult

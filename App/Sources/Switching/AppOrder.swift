@@ -13,6 +13,11 @@ final class AppOrder {
     private var running: [pid_t: NSRunningApplication] = [:]
     private var order: [pid_t] = []
     private var observers: [NSObjectProtocol] = []
+    /// During Live Switching, activations don't reorder the list, and for a moment after it neither do
+    /// the late notifications of apps that were only passed over.
+    private var frozen = false
+    private var ignoreActivationsUntil = Date.distantPast
+    private var allowedActivation: pid_t?
 
     init() {
         let me = ProcessInfo.processInfo.processIdentifier
@@ -25,8 +30,8 @@ final class AppOrder {
         }
         observe(NSWorkspace.didActivateApplicationNotification) { order, app in
             order.running[app.processIdentifier] = app
-            order.order.removeAll { $0 == app.processIdentifier }
-            order.order.insert(app.processIdentifier, at: 0)
+            guard !order.isIgnoringActivation(of: app.processIdentifier) else { return }
+            order.moveToFront(app.processIdentifier)
         }
         observe(NSWorkspace.didTerminateApplicationNotification) { order, app in
             order.running[app.processIdentifier] = nil
@@ -41,6 +46,28 @@ final class AppOrder {
         order += running.keys.filter { !known.contains($0) }.sorted()
         order.removeAll { running[$0] == nil }
         return order.compactMap { running[$0] }.filter { $0.activationPolicy == .regular && !$0.isTerminated }
+    }
+
+    /// Keeps the order as it is while Live Switching activates apps the Selection passes over.
+    func freeze() {
+        frozen = true
+    }
+
+    /// Ends a freeze. Only `final`, the app switched to, if any, counts as used.
+    func unfreeze(final: pid_t?) {
+        frozen = false
+        if let final { moveToFront(final) }
+        allowedActivation = final
+        ignoreActivationsUntil = Date.now.addingTimeInterval(1)
+    }
+
+    private func isIgnoringActivation(of pid: pid_t) -> Bool {
+        frozen || (Date.now < ignoreActivationsUntil && pid != allowedActivation)
+    }
+
+    private func moveToFront(_ pid: pid_t) {
+        order.removeAll { $0 == pid }
+        order.insert(pid, at: 0)
     }
 
     private func observe(

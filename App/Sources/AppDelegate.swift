@@ -64,6 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     #endif
 
+    #if DEBUG
+    #endif
+
     private func handle(_ frame: TouchFrame) {
         recorder?.record(frame)
         switchController.handle(frame)
@@ -133,6 +136,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             withTitle: gestureTap.isRunning ? "Touch Input: Running" : "Touch Input: Waiting for Permission",
             action: nil, keyEquivalent: "")
         menu.addItem(.separator())
+        let live = menu.addItem(withTitle: "Live Switching", action: #selector(toggleLiveSwitching), keyEquivalent: "")
+        live.target = self
+        live.state = UserDefaults.standard.bool(forKey: SwitchController.liveSwitchingKey) ? .on : .off
         let record = menu.addItem(withTitle: "Record Touches", action: #selector(toggleRecording), keyEquivalent: "")
         record.target = self
         record.state = recorder == nil ? .off : .on
@@ -142,6 +148,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openAccessibilitySettings() {
         Permissions.openAccessibilitySettings()
+    }
+
+    @objc private func toggleLiveSwitching() {
+        let defaults = UserDefaults.standard
+        defaults.set(!defaults.bool(forKey: SwitchController.liveSwitchingKey), forKey: SwitchController.liveSwitchingKey)
     }
 
     @objc private func toggleRecording() {

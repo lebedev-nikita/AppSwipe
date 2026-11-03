@@ -53,7 +53,7 @@ With **Live Switching** on, there is no waiting for the fingers to lift: the sel
 
 - While the Selection passes over Items, activation is plain:
   - an app without windows becomes active without opening one;
-  - a hidden app is not activated;
+  - a hidden app is not activated, and neither is an app whose windows are all minimized or on other Spaces, so the screen doesn't jump between Spaces;
   - a window is raised, and a minimized window stays minimized.
 - On Commit, the selected Item gets the full treatment: an app opens like a Dock click and unhides; a window un-minimizes.
 - Quick Switch still applies.
@@ -152,11 +152,11 @@ Measured on macOS 27.0.1 with a 16-inch MacBook Pro on 2026-11-03:
 - Fingers lift one by one, 7–30 ms apart.
 - Rewriting the trackpad preferences and running `activateSettings -u` turns off the system's horizontal swipes without a logout.
 - Accessibility grants survive rebuilds signed with the self-signed certificate.
+- The agent app can bring another app forward with `NSRunningApplication.activate(options:)`, in about 20 ms, even long after launch. Setting `AXFrontmost` through Accessibility is accepted but ignored.
 
 ## Open questions
 
 - Do gesture taps keep working after sleep?
-- Can an agent app reliably activate another app with public APIs on macOS 14 and later?
 - Can Mission Control be detected without private APIs?
 - Do three- and four-finger movements leak scroll events to the app under the pointer?
 - Does the Screen Recording re-approval prompt still appear on macOS 26 and 27?
