@@ -8,7 +8,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 
 - Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded.
 - Order: most recently used first, so the Active App is the Current Item.
-- Look: one row of app icons, with the selected app's name below.
+- Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
 - Commit activates the app, brings all its windows forward, and unhides it if hidden. If the app has no visible window, Commit behaves like a click on its Dock icon: it restores the most recent minimized window, or lets the app open a new one.
 
 ### Window Switcher (four fingers)
@@ -44,7 +44,8 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 4. On a Force Touch trackpad, each Step plays a short haptic tick. This is on by default and can be turned off.
 5. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.
 6. **Cancel** means committing while the Current Item is selected, or pressing Esc.
-7. The Switcher appears about 200 ms after the session starts, like the native switcher on a held Cmd-Tab. Lifting the fingers before then is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 100–170 ms and covered 21–41 mm, while deliberate swipes took 540–750 ms.
+7. The cursor stays still for the whole session and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was.
+8. The Switcher appears about 200 ms after the session starts, like the native switcher on a held Cmd-Tab. Lifting the fingers before then is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 100–170 ms and covered 21–41 mm, while deliberate swipes took 540–750 ms.
 
 Constraints:
 
