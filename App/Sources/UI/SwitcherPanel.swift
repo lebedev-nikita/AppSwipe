@@ -6,18 +6,22 @@ import AppKit
 @MainActor
 final class SwitcherPanel {
     struct Item {
+        /// An app icon; for a window, shown until its preview arrives.
         let image: NSImage
         let title: String
         var badge: String?
         /// Drawn faded, as for a minimized window.
         var isDimmed = false
+        /// Width over height of a window's preview; nil for an app icon.
+        var aspect: CGFloat?
+        var preview: CGImage?
     }
 
     /// Measured from the native switcher on macOS 27, in multiples of the icon artwork's size.
     struct Metrics {
         /// The artwork of a 128 pt icon, the native switcher's largest size.
-        static let maxIcon: CGFloat = 103
-        static let minIcon: CGFloat = 40
+        static let maxSize: CGFloat = 103
+        static let minSize: CGFloat = 40
         static let screenFraction: CGFloat = 0.85
         static let titleFontSize: CGFloat = 13
         /// From the bottom of the highlights to the title's baseline.
@@ -25,28 +29,45 @@ final class SwitcherPanel {
         /// From the title's baseline to the bottom of the panel.
         static let bottomPadding: CGFloat = 10
 
-        private static let pitchRatio: CGFloat = 1.29
         private static let insetRatio: CGFloat = 0.074
+        private static let gapRatio: CGFloat = 0.142
         private static let paddingRatio: CGFloat = 0.272
+        /// Very narrow or wide windows get a preview of this shape, cropped to fit.
+        private static let aspects: ClosedRange<CGFloat> = 0.6...2.0
 
-        /// Size of an icon's visible artwork, without the transparent margins around it.
-        let icon: CGFloat
-        /// Distance between the centres of neighbouring Items.
-        var pitch: CGFloat { (icon * Self.pitchRatio).rounded() }
-        /// Margin between an icon's artwork and the edge of its highlight.
-        var inset: CGFloat { (icon * Self.insetRatio).rounded() }
-        var highlight: CGFloat { icon + 2 * inset }
+        /// Height of every Item's content: an icon's visible artwork, without the transparent margins
+        /// around it, or a window's preview.
+        let size: CGFloat
+        /// Margin between an Item's content and the edge of its highlight.
+        var inset: CGFloat { (size * Self.insetRatio).rounded() }
+        /// Space between neighbouring highlights.
+        var gap: CGFloat { (size * Self.gapRatio).rounded() }
+        var highlightHeight: CGFloat { size + 2 * inset }
         /// From the panel's edge to the nearest highlight.
-        var padding: CGFloat { (icon * Self.paddingRatio).rounded() }
-        /// Corners are concentric: the highlight's wraps the icon's, the panel's wraps the highlight's.
-        var highlightCornerRadius: CGFloat { icon * 0.225 + inset }
-        var panelCornerRadius: CGFloat { highlightCornerRadius + padding }
+        var padding: CGFloat { (size * Self.paddingRatio).rounded() }
+        var iconCornerRadius: CGFloat { size * 0.225 }
+        var previewCornerRadius: CGFloat { size * 0.07 }
+        /// Corners are concentric: an icon's highlight wraps the icon, the panel wraps the highlight.
+        var panelCornerRadius: CGFloat { iconCornerRadius + inset + padding }
 
-        /// The largest icon that fits `count` Items into `width`, within the size limits.
-        init(fitting count: Int, into width: CGFloat) {
-            let count = CGFloat(max(count, 1))
-            let width = width / (2 * Self.paddingRatio + (count - 1) * Self.pitchRatio + 1 + 2 * Self.insetRatio)
-            icon = min(Self.maxIcon, max(Self.minIcon, width)).rounded(.down)
+        func contentWidth(aspect: CGFloat?) -> CGFloat {
+            guard let aspect else { return size }
+            return (size * min(max(aspect, Self.aspects.lowerBound), Self.aspects.upperBound)).rounded()
+        }
+
+        /// An Item's highlight plus the gap to its neighbour.
+        func itemWidth(aspect: CGFloat?) -> CGFloat {
+            contentWidth(aspect: aspect) + 2 * inset + gap
+        }
+
+        /// The largest size that fits Items of these shapes into `width`, within the size limits.
+        init(fitting aspects: [CGFloat?], into width: CGFloat) {
+            let widths = aspects.map { aspect in
+                aspect.map { min(max($0, Self.aspects.lowerBound), Self.aspects.upperBound) } ?? 1
+            }
+            let perItem = widths.reduce(0) { $0 + $1 + 2 * Self.insetRatio + Self.gapRatio }
+            let total = max(perItem, 1 + 2 * Self.insetRatio + Self.gapRatio) - Self.gapRatio + 2 * Self.paddingRatio
+            size = min(Self.maxSize, max(Self.minSize, width / total)).rounded(.down)
         }
     }
 
@@ -57,7 +78,7 @@ final class SwitcherPanel {
     private let titleField = NSTextField(labelWithString: "")
     private var items: [Item] = []
     private var itemViews: [ItemView] = []
-    private var metrics = Metrics(fitting: 1, into: 1000)
+    private var metrics = Metrics(fitting: [nil], into: 1000)
 
     init() {
         panel = NSPanel(
@@ -96,29 +117,31 @@ final class SwitcherPanel {
         let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }
             ?? NSScreen.main ?? NSScreen.screens[0]
         let maxWidth = screen.visibleFrame.width * Metrics.screenFraction
-        metrics = Metrics(fitting: items.count, into: maxWidth)
-        let pitch = metrics.pitch
-        let highlight = metrics.highlight
-        // Each Item spans one pitch; its highlight sits in the middle, leaving a gap to the next one.
-        let sideGap = (pitch - highlight) / 2
-        let edge = metrics.padding - sideGap
-        let rowWidth = CGFloat(items.count) * pitch
-        let visibleRowWidth = min(max(rowWidth, pitch), maxWidth - 2 * edge)
+        metrics = Metrics(fitting: items.map(\.aspect), into: maxWidth)
+        let height = metrics.highlightHeight
+        // Each Item's view holds its highlight in the middle, with half the gap on either side.
+        let edge = metrics.padding - metrics.gap / 2
 
         itemViews.forEach { $0.removeFromSuperview() }
-        itemViews = items.enumerated().map { index, item in
-            let view = ItemView(image: item.image, metrics: metrics)
+        var x: CGFloat = 0
+        itemViews = items.map { item in
+            let view = ItemView(image: item.image, aspect: item.aspect, metrics: metrics)
             view.badge = item.badge
             view.isDimmed = item.isDimmed
-            view.frame = NSRect(x: CGFloat(index) * pitch, y: 0, width: pitch, height: highlight)
+            view.preview = item.preview
+            let width = metrics.itemWidth(aspect: item.aspect)
+            view.frame = NSRect(x: x, y: 0, width: width, height: height)
+            x += width
             row.addSubview(view)
             return view
         }
-        row.frame = NSRect(x: 0, y: 0, width: rowWidth, height: highlight)
+        let rowWidth = max(x, metrics.itemWidth(aspect: nil))
+        let visibleRowWidth = min(rowWidth, maxWidth - 2 * edge)
+        row.frame = NSRect(x: 0, y: 0, width: rowWidth, height: height)
 
         let bottom = Metrics.bottomPadding + Metrics.titleBaseline
-        let size = NSSize(width: visibleRowWidth + 2 * edge, height: metrics.padding + highlight + bottom)
-        scrollView.frame = NSRect(x: edge, y: bottom, width: visibleRowWidth, height: highlight)
+        let size = NSSize(width: visibleRowWidth + 2 * edge, height: metrics.padding + height + bottom)
+        scrollView.frame = NSRect(x: edge, y: bottom, width: visibleRowWidth, height: height)
         glass.cornerRadius = metrics.panelCornerRadius
         let frame = screen.frame
         panel.setFrame(
@@ -126,6 +149,11 @@ final class SwitcherPanel {
                    width: size.width, height: size.height).integral,
             display: false)
         select(selection)
+    }
+
+    func setPreview(_ preview: CGImage, at index: Int) {
+        guard itemViews.indices.contains(index) else { return }
+        itemViews[index].preview = preview
     }
 
     func setBadges(_ badges: [Int: String]) {
@@ -169,7 +197,11 @@ final class SwitcherPanel {
 private final class ItemView: NSView {
     /// Share of an app icon's canvas that its artwork covers: 824 of 1024 points on Apple's icon grid.
     private static let artworkFraction: CGFloat = 0.805
+    /// A window's app icon, shown until its preview arrives, relative to the preview's height.
+    private static let placeholderFraction: CGFloat = 0.6
 
+    private let icon: NSImage
+    private let aspect: CGFloat?
     private let imageView: NSImageView
     private let highlightView = NSView()
     private let badgeView = BadgeView()
@@ -191,14 +223,24 @@ private final class ItemView: NSView {
         }
     }
 
-    init(image: NSImage, metrics: SwitcherPanel.Metrics) {
+    var preview: CGImage? {
+        didSet {
+            imageView.image = preview.map { NSImage(cgImage: $0, size: .zero) } ?? icon
+            needsLayout = true
+        }
+    }
+
+    init(image: NSImage, aspect: CGFloat?, metrics: SwitcherPanel.Metrics) {
+        icon = image
+        self.aspect = aspect
         imageView = NSImageView(image: image)
         imageView.imageScaling = .scaleProportionallyUpOrDown
         self.metrics = metrics
         super.init(frame: .zero)
         highlightView.wantsLayer = true
         highlightView.layer?.cornerCurve = .continuous
-        highlightView.layer?.cornerRadius = metrics.highlightCornerRadius
+        let contentRadius = aspect == nil ? metrics.iconCornerRadius : metrics.previewCornerRadius
+        highlightView.layer?.cornerRadius = contentRadius + metrics.inset
         highlightView.isHidden = true
         addSubview(highlightView)
         addSubview(imageView)
@@ -210,19 +252,24 @@ private final class ItemView: NSView {
 
     override func layout() {
         super.layout()
-        let iconSize = metrics.icon
-        let highlight = metrics.highlight
-        highlightView.frame = NSRect(
-            x: (bounds.width - highlight) / 2, y: (bounds.height - highlight) / 2, width: highlight, height: highlight)
-        let canvas = (iconSize / Self.artworkFraction).rounded()
-        imageView.frame = NSRect(
-            x: (bounds.width - canvas) / 2, y: (bounds.height - canvas) / 2, width: canvas, height: canvas)
-        let icon = NSRect(
-            x: (bounds.width - iconSize) / 2, y: (bounds.height - iconSize) / 2, width: iconSize, height: iconSize)
+        let size = metrics.size
+        let width = metrics.contentWidth(aspect: aspect)
+        let content = NSRect(x: (bounds.width - width) / 2, y: (bounds.height - size) / 2, width: width, height: size)
+        highlightView.frame = content.insetBy(dx: -metrics.inset, dy: -metrics.inset)
+        if aspect != nil {
+            let side = preview == nil ? (size * Self.placeholderFraction).rounded() : 0
+            imageView.frame = preview == nil
+                ? NSRect(x: content.midX - side / 2, y: content.midY - side / 2, width: side, height: side)
+                : content
+            badgeView.isHidden = true
+            return
+        }
+        let canvas = (size / Self.artworkFraction).rounded()
+        imageView.frame = NSRect(x: content.midX - canvas / 2, y: content.midY - canvas / 2, width: canvas, height: canvas)
         // Like the Dock, the badge sits over the icon's top-right corner.
-        let badgeHeight = (iconSize * 0.44).rounded()
+        let badgeHeight = (size * 0.44).rounded()
         let badgeWidth = max(badgeHeight, badgeView.textWidth(forHeight: badgeHeight) + badgeHeight * 0.6)
-        let center = NSPoint(x: icon.maxX - iconSize * 0.11, y: icon.maxY - iconSize * 0.09)
+        let center = NSPoint(x: content.maxX - size * 0.11, y: content.maxY - size * 0.09)
         badgeView.frame = NSRect(
             x: min(center.x - badgeHeight / 2, bounds.maxX - badgeWidth), y: center.y - badgeHeight / 2,
             width: badgeWidth, height: badgeHeight)

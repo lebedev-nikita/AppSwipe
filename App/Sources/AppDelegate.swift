@@ -28,10 +28,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         DiagnosticLog.write(
             "launched OpenSwipe \(version) on \(ProcessInfo.processInfo.operatingSystemVersionString); "
-                + "accessibility \(Permissions.hasAccessibility), input monitoring \(Permissions.canListenToInput)")
+                + "accessibility \(Permissions.hasAccessibility), input monitoring \(Permissions.canListenToInput), "
+                + "screen recording \(Permissions.hasScreenRecording)")
         setUpStatusItem()
         if UserDefaults.standard.bool(forKey: Self.recordTouchesKey) { startRecording() }
         Permissions.requestAccessibility()
+        Permissions.requestScreenRecording()
         switchController.warmUp()
         startInputTaps()
         watchPermissions()
@@ -39,7 +41,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
         if preview > 0 { switchController.preview(.apps, selection: preview) }
         let windowPreview = UserDefaults.standard.integer(forKey: "PreviewWindowSwitcher")
-        if windowPreview > 0 { switchController.preview(.windows, selection: windowPreview) }
+        if windowPreview > 0 {
+            let app = UserDefaults.standard.string(forKey: "PreviewWindowsOf")
+            switchController.preview(.windows, selection: windowPreview, of: app)
+        }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
         if UserDefaults.standard.bool(forKey: "GlassTest") {
             switchController.glassTest(native: UserDefaults.standard.bool(forKey: "GlassTestNative"))
@@ -79,8 +84,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func watchPermissions() {
         Task {
             var state = (Permissions.hasAccessibility, Permissions.canListenToInput)
+            var screenRecording = Permissions.hasScreenRecording
             while true {
                 try? await Task.sleep(for: .seconds(1))
+                if Permissions.hasScreenRecording != screenRecording {
+                    screenRecording.toggle()
+                    DiagnosticLog.write("permissions changed: screen recording \(screenRecording)")
+                }
                 let current = (Permissions.hasAccessibility, Permissions.canListenToInput)
                 guard current != state else { continue }
                 state = current
@@ -134,6 +144,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             withTitle: Permissions.hasAccessibility ? "Accessibility: Granted" : "Accessibility: Not Granted…",
             action: #selector(openAccessibilitySettings), keyEquivalent: "")
         accessibility.target = self
+        let screenRecording = menu.addItem(
+            withTitle: Permissions.hasScreenRecording ? "Screen Recording: Granted" : "Screen Recording: Not Granted…",
+            action: #selector(openScreenRecordingSettings), keyEquivalent: "")
+        screenRecording.target = self
         menu.addItem(
             withTitle: gestureTap.isRunning ? "Touch Input: Running" : "Touch Input: Waiting for Permission",
             action: nil, keyEquivalent: "")
@@ -146,6 +160,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         record.state = recorder == nil ? .off : .on
         menu.addItem(withTitle: "Show Logs in Finder", action: #selector(showLogs), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Quit OpenSwipe", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+    }
+
+    @objc private func openScreenRecordingSettings() {
+        Permissions.openScreenRecordingSettings()
     }
 
     @objc private func openAccessibilitySettings() {

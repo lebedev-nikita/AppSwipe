@@ -4,6 +4,10 @@ import ApplicationServices
 /// One window in the Window Switcher.
 struct WindowEntry: @unchecked Sendable {
     let element: AXUIElement
+    /// The window number, for capturing a Window Preview; nil if macOS doesn't tell.
+    let id: CGWindowID?
+    /// In screen coordinates with the origin at the top left of the main display.
+    let frame: CGRect
     /// The window's title, or the app's name for an untitled window.
     let title: String
     let isMinimized: Bool
@@ -22,6 +26,7 @@ final class WindowList {
     private static let panels: Set<String> = [kAXFloatingWindowSubrole, kAXSystemFloatingWindowSubrole]
     private static let attributes = [
         kAXRoleAttribute, kAXSubroleAttribute, kAXTitleAttribute, kAXMinimizedAttribute, kAXSizeAttribute,
+        kAXPositionAttribute,
     ] as CFArray
 
     private var elements: [pid_t: AXUIElement] = [:]
@@ -71,18 +76,21 @@ final class WindowList {
         var values: CFArray?
         guard AXUIElementCopyMultipleAttributeValues(window, attributes, AXCopyMultipleAttributeOptions(), &values)
                 == .success,
-              let values = values as? [AnyObject], values.count == 5,
+              let values = values as? [AnyObject], values.count == 6,
               values[0] as? String == kAXWindowRole
         else { return nil }
         let subrole = values[1] as? String ?? ""
         // Popups and other transient windows have other subroles.
         guard ordinary.contains(subrole) || panels.contains(subrole) else { return nil }
         var size = CGSize.zero
+        var origin = CGPoint.zero
         if CFGetTypeID(values[4]) == AXValueGetTypeID() { AXValueGetValue(values[4] as! AXValue, .cgSize, &size) }
+        if CFGetTypeID(values[5]) == AXValueGetTypeID() { AXValueGetValue(values[5] as! AXValue, .cgPoint, &origin) }
         guard size.width >= 20, size.height >= 20 else { return nil }
         let title = (values[2] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? appName
         return WindowEntry(
-            element: window, title: title, isMinimized: values[3] as? Bool ?? false, isPanel: panels.contains(subrole))
+            element: window, id: AXWindowID.of(window), frame: CGRect(origin: origin, size: size), title: title,
+            isMinimized: values[3] as? Bool ?? false, isPanel: panels.contains(subrole))
     }
 }
 

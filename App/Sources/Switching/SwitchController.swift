@@ -58,6 +58,9 @@ final class SwitchController {
     private let cursor = CursorFreeze()
     private let appOrder = AppOrder()
     private let windowList = WindowList()
+    private let previews = WindowPreviews()
+    private var windowContentsCount = 0
+    private var previewCapture: Task<Void, Never>?
     private let sessionSettings = SwitchSession.Settings()
     private let clock = ContinuousClock()
     private var recognizer = SwipeRecognizer()
@@ -81,6 +84,20 @@ final class SwitchController {
             guard let self, session == nil, contents == nil else { return }
             prepareApps()
             WindowList.warmUp(appOrder.apps().map(\.processIdentifier))
+            capturePreviewsSoon()
+        }
+    }
+
+    /// Captures the frontmost app's windows a moment after it activates, so its Window Previews are
+    /// ready before the next swipe, and drops previews of windows that are gone.
+    private func capturePreviewsSoon() {
+        previewCapture?.cancel()
+        previewCapture = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard let self, !Task.isCancelled, session == nil, let app = appOrder.frontmost else { return }
+            let all = CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]] ?? []
+            previews.forget(allBut: Set(all.compactMap { $0[kCGWindowNumber as String] as? CGWindowID }))
+            previews.refresh(windowList.windows(of: app), pid: app.processIdentifier) { _, _ in }
         }
     }
 
@@ -124,21 +141,38 @@ final class SwitchController {
 
     #if DEBUG
     /// Shows a Switcher for a few seconds without a gesture, for checking its look.
-    func preview(_ kind: SwitcherKind, selection: Int) {
+    func preview(_ kind: SwitcherKind, selection: Int, of bundleID: String? = nil) {
+        if let bundleID, let app = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).first {
+            prepareWindows(of: app)
+            // Give the previews a moment to arrive.
+            Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                windowPanel.select(selection)
+                windowPanel.show()
+                logPanelFrame(windowPanel)
+                try? await Task.sleep(for: .seconds(6))
+                windowPanel.hide()
+            }
+            return
+        }
         begin(kind, direction: .right, at: ProcessInfo.processInfo.systemUptime)
         inputTap.isEnabled = false
         guard let session else { return }
         session.panel.select(selection)
-        let screenHeight = NSScreen.screens[0].frame.height
-        let frame = session.panel.frame
-        // In the top-left-origin coordinates `screencapture -R` takes.
-        DiagnosticLog.write(
-            "preview: panel at \(Int(frame.minX)),\(Int(screenHeight - frame.maxY)),"
-                + "\(Int(frame.width)),\(Int(frame.height))")
+        logPanelFrame(session.panel)
         Task {
             try? await Task.sleep(for: .seconds(6))
             finish()
         }
+    }
+
+    /// Logs the panel's frame in the top-left-origin coordinates `screencapture -R` takes.
+    private func logPanelFrame(_ panel: SwitcherPanel) {
+        let screenHeight = NSScreen.screens[0].frame.height
+        let frame = panel.frame
+        DiagnosticLog.write(
+            "preview: panel at \(Int(frame.minX)),\(Int(screenHeight - frame.maxY)),"
+                + "\(Int(frame.width)),\(Int(frame.height))")
     }
 
     /// Shows the App Switcher over a test backdrop, then, with `native`, the native Cmd-Tab switcher,
@@ -199,15 +233,27 @@ final class SwitchController {
 
     /// Lays out the Window Switcher with the Active App's windows, without showing it.
     @discardableResult
-    private func prepareWindows() -> WindowContents? {
-        guard let app = appOrder.frontmost ?? NSWorkspace.shared.frontmostApplication else { return nil }
+    private func prepareWindows(of chosen: NSRunningApplication? = nil) -> WindowContents? {
+        guard let app = chosen ?? appOrder.frontmost ?? NSWorkspace.shared.frontmostApplication else { return nil }
         let started = clock.now
         let windows = windowList.windows(of: app)
         let listed = clock.now
         let icon = app.icon ?? NSImage()
         windowPanel.prepare(
-            windows.map { SwitcherPanel.Item(image: icon, title: $0.title, isDimmed: $0.isMinimized) },
+            windows.map { window in
+                SwitcherPanel.Item(
+                    image: icon, title: window.title, isDimmed: window.isMinimized,
+                    aspect: window.frame.width / max(window.frame.height, 1), preview: previews.cached(window))
+            },
             selection: -1)
+        windowContentsCount += 1
+        let id = windowContentsCount
+        previewCapture?.cancel()
+        previews.refresh(windows, pid: app.processIdentifier) { [weak self] index, image in
+            // Only while the panel still holds these windows.
+            guard let self, windowContentsCount == id else { return }
+            windowPanel.setPreview(image, at: index)
+        }
         #if DEBUG
         DiagnosticLog.write(
             "timing: window list \(Self.milliseconds(listed - started)) ms, "
