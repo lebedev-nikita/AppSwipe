@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         setUpStatusItem()
         if UserDefaults.standard.bool(forKey: Self.recordTouchesKey) { startRecording() }
         Permissions.requestAccessibility()
+        switchController.warmUp()
         startInputTaps()
         watchPermissions()
         #if DEBUG

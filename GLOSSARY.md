@@ -59,5 +59,5 @@ Ending a Switch Session without switching: lifting the fingers with the Current 
 _Avoid_: Abort, dismiss
 
 **Quick Switch**:
-A Switch Session whose fingers lift before the Switcher appears. It always Commits to the second Item, the counterpart of a quick Cmd-Tab tap.
+A Switch Session whose fingers lift within about 200 ms of its start. It always Commits to the second Item, the counterpart of a quick Cmd-Tab tap.
 _Avoid_: Flick, quick tap

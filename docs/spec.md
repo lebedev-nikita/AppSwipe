@@ -42,11 +42,10 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
    - A Step is a fixed physical distance, about 1 cm by default and adjustable in Settings, with no acceleration.
    - The Selection stops at either end of the list instead of wrapping around.
    - Direction ignores the natural-scrolling setting.
-4. On a Force Touch trackpad, each Step plays a short haptic tick. This is on by default and can be turned off.
-5. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.
-6. **Cancel** means committing while the Current Item is selected, or pressing Esc.
-7. The cursor stays still for the whole session and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was.
-8. The Switcher appears about 200 ms after the session starts, like the native switcher on a held Cmd-Tab. Lifting the fingers before then is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 100–170 ms and covered 21–41 mm, while deliberate swipes took 540–750 ms.
+4. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.
+5. **Cancel** means committing while the Current Item is selected, or pressing Esc.
+6. The cursor stays still for the whole session and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was.
+7. The Switcher appears the moment the session opens. Lifting the fingers within about 200 ms of that is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 62–133 ms from opening to lift, while deliberate swipes took 480–660 ms.
 
 Constraints:
 
@@ -65,7 +64,6 @@ OpenSwipe is a menu bar agent with no Dock icon. Its menu bar icon offers Settin
 - Launch at login.
 - Step length.
 - Enable or disable each Switcher.
-- Haptic feedback.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews.
 - Gesture conflicts, described below.
 
@@ -119,7 +117,7 @@ The interface is in English, with a Russian localization.
 3. App Switcher end to end.
 4. Window Switcher with app icon and title in place of previews.
 5. Window Previews.
-6. Settings, gesture conflicts, permission status, launch at login, haptics.
+6. Settings, gesture conflicts, permission status, launch at login.
 
 ## Spike findings
 

@@ -3,23 +3,35 @@ import SwitchCore
 
 /// Runs Switch Sessions: feeds touch frames to the recognizer, drives the Switcher panel, and
 /// commits the Selection.
+///
+/// The Switcher appears the moment a session opens. To make that instant, the panel is laid out as
+/// soon as the fingers land, while they travel the few millimetres that open the session.
 @MainActor
 final class SwitchController {
+    private struct Contents {
+        let apps: [NSRunningApplication]
+        let preparedAt: ContinuousClock.Instant
+    }
+
     private struct Session {
         let apps: [NSRunningApplication]
         var selection: SwitchSession
-        var reveal: Task<Void, Never>
     }
+
+    /// Fingers resting longer than this before swiping get a freshly built app list.
+    private static let contentsLifetime = Duration.seconds(2)
 
     private let inputTap: SessionInputTap
     private let panel = SwitcherPanel()
     private let cursor = CursorFreeze()
     private let appOrder = AppOrder()
     private let sessionSettings = SwitchSession.Settings()
+    private let clock = ContinuousClock()
     private var recognizer: SwipeRecognizer
+    private var contents: Contents?
+    private var contentsCount = 0
     private var session: Session?
-    private var sessionCount = 0
-    /// Dock badges by app bundle path, from the previous session, shown until fresh ones arrive.
+    /// Dock badges by app bundle path, from the previous refresh, shown until fresh ones arrive.
     private var badges: [String: String] = [:]
 
     init(inputTap: SessionInputTap) {
@@ -31,8 +43,16 @@ final class SwitchController {
         inputTap.onEscape = { [weak self] in self?.cancel() }
     }
 
+    /// Creates and lays out the panel once, so the first swipe doesn't pay for it.
+    func warmUp() {
+        prepare()
+    }
+
     func handle(_ frame: TouchFrame) {
         switch recognizer.handle(frame) {
+        case .armed(let fingers):
+            guard session == nil, SwitcherKind(fingers: fingers) == .apps else { return }
+            prepare()
         case .began(let fingers, let direction, let time):
             guard SwitcherKind(fingers: fingers) == .apps else { return }
             begin(direction: direction, at: time)
@@ -40,7 +60,6 @@ final class SwitchController {
             guard var session, session.selection.move(travel: travel) else { return }
             self.session = session
             panel.select(session.selection.selection)
-            NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         case .ended(let time):
             end(at: time)
         case nil:
@@ -53,9 +72,7 @@ final class SwitchController {
     func preview(selection: Int) {
         begin(direction: .right, at: ProcessInfo.processInfo.systemUptime)
         inputTap.isEnabled = false
-        session?.reveal.cancel()
         panel.select(selection)
-        panel.show()
         let screenHeight = NSScreen.screens[0].frame.height
         let frame = panel.frame
         // In the top-left-origin coordinates `screencapture -R` takes.
@@ -69,38 +86,72 @@ final class SwitchController {
     }
     #endif
 
-    private func begin(direction: Direction, at time: Double) {
+    /// Lays out the panel with the current apps, without showing it.
+    @discardableResult
+    private func prepare() -> Contents {
+        let started = clock.now
         let apps = appOrder.apps()
         let paths = apps.map { $0.bundleURL.map(DockBadges.path(of:)) }
-        let selection = SwitchSession(itemCount: apps.count, direction: direction, began: time, settings: sessionSettings)
+        let listed = clock.now
         panel.prepare(
             zip(apps, paths).map { app, path in
                 SwitcherPanel.Item(
                     image: app.icon ?? NSImage(), title: app.localizedName ?? "", badge: path.flatMap { badges[$0] })
             },
-            selection: selection.selection)
-        sessionCount += 1
-        refreshBadges(paths: paths, session: sessionCount)
-        let delay = sessionSettings.revealDelay
-        let reveal = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(delay))
-            guard !Task.isCancelled else { return }
-            self?.panel.show()
-            self?.cursor.hide()
-        }
-        session = Session(apps: apps, selection: selection, reveal: reveal)
-        cursor.freeze()
-        inputTap.isEnabled = true
+            selection: -1)
+        #if DEBUG
+        DiagnosticLog.write(
+            "timing: app list \(Self.milliseconds(listed - started)) ms, "
+                + "layout \(Self.milliseconds(clock.now - listed)) ms, \(apps.count) apps")
+        #endif
+        contentsCount += 1
+        refreshBadges(paths: paths, contents: contentsCount)
+        let contents = Contents(apps: apps, preparedAt: clock.now)
+        self.contents = contents
+        return contents
     }
 
-    private func refreshBadges(paths: [String?], session id: Int) {
+    private func begin(direction: Direction, at time: Double) {
+        let eventAge = ProcessInfo.processInfo.systemUptime - time
+        let started = clock.now
+        let contents = self.contents.flatMap { started - $0.preparedAt < Self.contentsLifetime ? $0 : nil }
+            ?? prepare()
+        self.contents = nil
+        let selection = SwitchSession(
+            itemCount: contents.apps.count, direction: direction, began: time, settings: sessionSettings)
+        panel.select(selection.selection)
+        panel.show()
+        cursor.freeze()
+        cursor.hide()
+        inputTap.isEnabled = true
+        session = Session(apps: contents.apps, selection: selection)
+        #if DEBUG
+        DiagnosticLog.write(
+            "timing: event age \(Self.milliseconds(eventAge)) ms, "
+                + "showing the panel \(Self.milliseconds(clock.now - started)) ms")
+        #endif
+    }
+
+    #if DEBUG
+    private static func milliseconds(_ duration: Duration) -> String {
+        let (seconds, attoseconds) = duration.components
+        return milliseconds(Double(seconds) + Double(attoseconds) / 1e18)
+    }
+
+    private static func milliseconds(_ seconds: Double) -> String {
+        (seconds * 1000).formatted(.number.precision(.fractionLength(1)))
+    }
+    #endif
+
+    private func refreshBadges(paths: [String?], contents id: Int) {
         guard let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first
         else { return }
         let pid = dock.processIdentifier
         Task {
             let badges = await Task.detached { DockBadges.current(dockPID: pid) }.value
             self.badges = badges
-            guard id == sessionCount, session != nil else { return }
+            // Only while the panel still holds the apps these paths describe.
+            guard id == contentsCount else { return }
             var byItem: [Int: String] = [:]
             for (index, path) in paths.enumerated() {
                 if let path, let badge = badges[path] { byItem[index] = badge }
@@ -127,7 +178,6 @@ final class SwitchController {
     private func finish() -> Session? {
         guard let session else { return nil }
         self.session = nil
-        session.reveal.cancel()
         panel.hide()
         cursor.release()
         inputTap.isEnabled = false

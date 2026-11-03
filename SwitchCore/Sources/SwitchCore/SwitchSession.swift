@@ -16,8 +16,8 @@ public struct SwitchSession: Sendable {
     public struct Settings: Sendable {
         /// Finger travel that moves the Selection by one Item, in millimetres.
         public var stepLength = 10.0
-        /// Seconds from the session's start until the Switcher appears. Lifting earlier is a Quick Switch.
-        public var revealDelay = 0.2
+        /// Lifting the fingers within this many seconds of the session's start is a Quick Switch.
+        public var quickSwitchDuration = 0.2
         /// Extra travel, as a fraction of a Step, past the midpoint between Items before the Selection
         /// moves. It keeps a resting finger from flipping the Selection back and forth.
         public var hysteresis = 0.15
@@ -75,7 +75,7 @@ public struct SwitchSession: Sendable {
 
     /// The result of lifting the fingers at `time`.
     public func outcome(endedAt time: Double) -> Outcome {
-        let isQuickSwitch = time - began < settings.revealDelay
+        let isQuickSwitch = time - began < settings.quickSwitchDuration
         let item = isQuickSwitch ? 1 : selection
         guard itemCount > 1, item > 0 else { return .cancel }
         return .activate(item: item)

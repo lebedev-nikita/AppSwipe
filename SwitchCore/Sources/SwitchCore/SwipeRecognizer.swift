@@ -5,6 +5,9 @@ public enum Direction: Sendable {
 
 /// What `SwipeRecognizer` reports about the swipe that drives a Switch Session.
 public enum SwipeEvent: Equatable, Sendable {
+    /// A number of fingers that can open a Switcher has landed, so a session may follow. Reported
+    /// again whenever the set of fingers changes before a session opens.
+    case armed(fingers: Int)
     /// Enough fingers travelled far enough sideways to open a Switcher.
     case began(fingers: Int, direction: Direction, time: Double)
     /// Horizontal travel since `began`, in millimetres. Positive is to the right.
@@ -19,7 +22,7 @@ public struct SwipeRecognizer: Sendable {
         /// Finger counts that can open a Switcher.
         public var fingerCounts: Set<Int> = [3, 4]
         /// Sideways travel that opens a Switcher, in millimetres.
-        public var openingTravel = 6.0
+        public var openingTravel = 3.0
         /// How many times farther the fingers must travel sideways than vertically.
         public var horizontalBias = 2.0
 
@@ -63,7 +66,7 @@ public struct SwipeRecognizer: Sendable {
             }
             guard case .tracking(let fingers, var travel) = state, fingers == ids else {
                 state = .tracking(fingers: ids, travel: Vector())
-                return nil
+                return .armed(fingers: ids.count)
             }
             let delta = movement(of: ids, to: down, surface: frame.surface)
             travel.x += delta.x

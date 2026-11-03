@@ -59,7 +59,7 @@ final class SwitcherPanel {
 
     init() {
         panel = NSPanel(
-            contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+            contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.level = .popUpMenu
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.isOpaque = false
@@ -68,6 +68,8 @@ final class SwitcherPanel {
         panel.hasShadow = false
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
+        // Appear and disappear at once, without the default fade.
+        panel.animationBehavior = .none
 
         // A light tint, to match the native switcher's slightly darker glass.
         glass.tintColor = NSColor(white: 0, alpha: 0.06)

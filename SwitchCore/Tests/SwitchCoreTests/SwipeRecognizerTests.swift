@@ -7,8 +7,17 @@ import Testing
         var trackpad = Trackpad()
         trackpad.land(3)
 
-        #expect(trackpad.move(dx: 5) == [])
-        #expect(trackpad.move(dx: 2) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
+        #expect(trackpad.move(dx: 2) == [])
+        #expect(trackpad.move(dx: 1.5) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
+    }
+
+    @Test func landingFingersArmTheRecognizer() {
+        var trackpad = Trackpad()
+
+        #expect(trackpad.land(2) == [])
+        #expect(trackpad.land(1) == [.armed(fingers: 3)])
+        #expect(trackpad.land(1) == [.armed(fingers: 4)])
+        #expect(trackpad.land(1) == [])
     }
 
     @Test func fourFingersOpenASessionToTheLeft() {
@@ -29,7 +38,7 @@ import Testing
     @Test func aVerticalSwipeIsIgnoredUntilTheFingersLift() {
         var trackpad = Trackpad()
         trackpad.land(3)
-        #expect(trackpad.move(dx: 1, dy: 8) == [])
+        #expect(trackpad.move(dx: 1, dy: 4) == [])
         #expect(trackpad.move(dx: 30) == [])
 
         trackpad.liftAll()
@@ -41,7 +50,7 @@ import Testing
         var trackpad = Trackpad()
         trackpad.land(3)
 
-        #expect(trackpad.move(dx: 7, dy: 5) == [])
+        #expect(trackpad.move(dx: 4, dy: 3) == [])
     }
 
     @Test func travelCountsFromTheOpeningPoint() {
@@ -59,11 +68,11 @@ import Testing
     @Test func landingFingersOneByOneRestartsTheTravel() {
         var trackpad = Trackpad()
         trackpad.land(3)
-        trackpad.move(dx: 5)
+        trackpad.move(dx: 2)
         trackpad.land(1)
 
-        #expect(trackpad.move(dx: 5) == [])
-        #expect(trackpad.move(dx: 2) == [.began(fingers: 4, direction: .right, time: trackpad.time)])
+        #expect(trackpad.move(dx: 2) == [])
+        #expect(trackpad.move(dx: 1.5) == [.began(fingers: 4, direction: .right, time: trackpad.time)])
     }
 
     @Test func aFingerLandingMidSessionDoesNotMoveIt() {
@@ -103,11 +112,13 @@ import Testing
                 sessions[sessions.count - 1].travel = travel
             case .ended(let time):
                 sessions[sessions.count - 1].ended = time
+            case .armed:
+                break
             }
         }
 
-        let deliberate = sessions.filter { $0.ended - $0.began >= SwitchSession.Settings().revealDelay }
-        let quick = sessions.filter { $0.ended - $0.began < SwitchSession.Settings().revealDelay }
+        let deliberate = sessions.filter { $0.ended - $0.began >= SwitchSession.Settings().quickSwitchDuration }
+        let quick = sessions.filter { $0.ended - $0.began < SwitchSession.Settings().quickSwitchDuration }
         #expect(sessions.count == 11)
         #expect(deliberate.map(\.direction) == [.left, .right, .left, .right])
         #expect(deliberate.allSatisfy { abs($0.travel) > 60 })
