@@ -7,6 +7,9 @@ import AppKit
 /// kept current from workspace notifications, so reading it at the start of a swipe costs nothing.
 @MainActor
 final class AppOrder {
+    /// Called after the list or its order changes.
+    var onChange: () -> Void = {}
+
     private var running: [pid_t: NSRunningApplication] = [:]
     private var order: [pid_t] = []
     private var observers: [NSObjectProtocol] = []
@@ -51,6 +54,7 @@ final class AppOrder {
             MainActor.assumeIsolated {
                 guard let self, app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
                 update(self, app)
+                self.onChange()
             }
         })
     }
