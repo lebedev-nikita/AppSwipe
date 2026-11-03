@@ -39,6 +39,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
         if preview > 0 { switchController.preview(selection: preview) }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
+        if UserDefaults.standard.bool(forKey: "GlassTest") {
+            switchController.glassTest(native: UserDefaults.standard.bool(forKey: "GlassTestNative"))
+        }
         #endif
     }
 

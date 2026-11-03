@@ -86,6 +86,36 @@ final class SwitchController {
     }
     #endif
 
+    #if DEBUG
+    /// Shows the Switcher over a test backdrop, then, with `native`, the native Cmd-Tab switcher, on a
+    /// fixed timeline that a script captures.
+    func glassTest(native: Bool) {
+        let backdrop = GlassTestBackdrop(size: NSSize(width: 1100, height: 440))
+        Task {
+            backdrop.show()
+            DiagnosticLog.write("glass test: start, rect \(backdrop.captureRect)")
+            try? await Task.sleep(for: .seconds(1))
+            prepare()
+            panel.select(1)
+            panel.show()
+            try? await Task.sleep(for: .seconds(0.3))
+            DiagnosticLog.write("glass test: showing ours")
+            try? await Task.sleep(for: .seconds(1.2))
+            panel.hide()
+            if native {
+                GlassTestBackdrop.openNativeSwitcher()
+                try? await Task.sleep(for: .seconds(0.6))
+                DiagnosticLog.write("glass test: showing native")
+                try? await Task.sleep(for: .seconds(0.8))
+                GlassTestBackdrop.closeNativeSwitcher()
+            }
+            try? await Task.sleep(for: .seconds(0.5))
+            backdrop.hide()
+            DiagnosticLog.write("glass test: done")
+        }
+    }
+    #endif
+
     /// Lays out the panel with the current apps, without showing it.
     @discardableResult
     private func prepare() -> Contents {

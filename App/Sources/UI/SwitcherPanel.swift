@@ -71,8 +71,7 @@ final class SwitcherPanel {
         // Appear and disappear at once, without the default fade.
         panel.animationBehavior = .none
 
-        // A light tint, to match the native switcher's slightly darker glass.
-        glass.tintColor = NSColor(white: 0, alpha: 0.06)
+        GlassMaterial.useSwitcherMaterial(for: glass)
         let content = NSView()
         glass.contentView = content
         panel.contentView = glass
