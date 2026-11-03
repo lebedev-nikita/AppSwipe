@@ -58,7 +58,8 @@ With **Live Switching** on, there is no waiting for the fingers to lift: the sel
 - On Commit, the selected Item gets the full treatment: an app opens like a Dock click and unhides; a window un-minimizes.
 - Quick Switch still applies.
 - Cancel, by lifting on the Current Item or pressing Esc, activates the Active App again.
-- Only the final Item counts as used: it moves to the front of the order, the Active App becomes second, and the Items passed over keep their places. The native Cmd-Tab order may still record them.
+- In the App Switcher, only the final app counts as used: it moves to the front of the order, the Active App becomes second, and the apps passed over keep their places. The native Cmd-Tab order may still record them.
+- In the Window Switcher, windows passed over stay raised. Accessibility can only raise a window to the top, so putting them back would flash them over the window switched to.
 
 Constraints:
 

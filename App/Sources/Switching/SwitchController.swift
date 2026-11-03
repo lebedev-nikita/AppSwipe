@@ -40,8 +40,6 @@ final class SwitchController {
         var passable: Set<Int>?
         /// The Item Live Switching last brought forward.
         var inFront = 0
-        /// Windows Live Switching raised, so their stacking order can be put back.
-        var raised: Set<Int> = []
     }
 
     static let liveSwitchingKey = "LiveSwitching"
@@ -314,7 +312,6 @@ final class SwitchController {
             AppActivator.bringForward(apps[item])
         case .windows(let app, let windows):
             WindowActivator.raise(windows[item], of: app)
-            session.raised.insert(item)
         }
         session.inFront = item
     }
@@ -360,7 +357,6 @@ final class SwitchController {
                 AppActivator.activate(apps[item])
                 if session.passable != nil { appOrder.unfreeze(final: apps[item].processIdentifier) }
             case .windows(let app, let windows):
-                restoreStacking(after: session, except: item)
                 WindowActivator.focus(windows[item], of: app)
             }
         case .cancel:
@@ -380,18 +376,10 @@ final class SwitchController {
         case .apps(let apps):
             if session.inFront != 0, let active = apps.first { AppActivator.bringForward(active) }
             appOrder.unfreeze(final: nil)
-        case .windows:
-            restoreStacking(after: session, except: nil)
-        }
-    }
-
-    /// Puts the windows Live Switching raised, and the Current Item, back in their original stacking
-    /// order, so only the window switched to counts as used.
-    private func restoreStacking(after session: Session, except final: Int?) {
-        guard case .windows(let app, let windows) = session.targets, !session.raised.isEmpty else { return }
-        let restacked = session.raised.union([0]).subtracting(final.map { [$0] } ?? [])
-        for item in restacked.sorted(by: >) where !windows[item].isMinimized {
-            WindowActivator.raise(windows[item], of: app)
+        case .windows(let app, let windows):
+            // Windows passed over stay raised: Accessibility can only raise a window to the top, so
+            // putting them back would flash them over the window switched to.
+            if session.inFront != 0, let current = windows.first { WindowActivator.raise(current, of: app) }
         }
     }
 
