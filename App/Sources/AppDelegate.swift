@@ -14,10 +14,10 @@ enum Main {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    private static let recordTouchesKey = "RecordTouches"
-
+    private let preferences = Preferences.shared
+    private let settings = SettingsWindow()
     private let sessionInputTap = SessionInputTap()
-    private lazy var switchController = SwitchController(inputTap: sessionInputTap)
+    private lazy var switchController = SwitchController(inputTap: sessionInputTap, trial: settings.trial)
     private lazy var gestureTap = GestureEventTap { [weak self] frame in self?.handle(frame) }
     private var recorder: TouchRecorder?
     private let eventTypeProbe = EventTypeProbe()
@@ -31,12 +31,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 + "accessibility \(Permissions.hasAccessibility), input monitoring \(Permissions.canListenToInput), "
                 + "screen recording \(Permissions.hasScreenRecording)")
         setUpStatusItem()
-        if UserDefaults.standard.bool(forKey: Self.recordTouchesKey) { startRecording() }
+        observePreferences()
         Permissions.requestAccessibility()
-        Permissions.requestScreenRecording()
         switchController.warmUp()
         startInputTaps()
         watchPermissions()
+        if preferences.isFirstLaunch { settings.show() }
         #if DEBUG
         let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
         if preview > 0 { switchController.preview(.apps, selection: preview) }
@@ -69,9 +69,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DiagnosticLog.write("cursor probe: done")
         }
     }
-    #endif
-
-    #if DEBUG
     #endif
 
     private func handle(_ frame: TouchFrame) {
@@ -120,8 +117,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// Opening OpenSwipe again, as from Finder or Spotlight, shows Settings, the way back when the menu
+    /// bar icon is hidden.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        settings.show()
+        return false
+    }
+
+    /// Applies the settings that live here, now and whenever they change.
+    private func observePreferences() {
+        withObservationTracking {
+            statusItem?.isVisible = preferences.showMenuBarIcon
+            if preferences.recordTouches { startRecording() } else { recorder = nil }
+        } onChange: { [weak self] in
+            Task { @MainActor in self?.observePreferences() }
+        }
+    }
+
     private func startRecording() {
-        recorder = recorder ?? TouchRecorder()
+        guard recorder == nil else { return }
+        recorder = TouchRecorder()
         if !eventTypeProbe.start() { DiagnosticLog.write("event type probe unavailable") }
     }
 
@@ -138,50 +153,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        menu.addItem(withTitle: "OpenSwipe (development build)", action: nil, keyEquivalent: "")
+        menu.addItem(withTitle: String(localized: "Settings…"), action: #selector(showSettings), keyEquivalent: ",")
+            .target = self
+        let pause = menu.addItem(
+            withTitle: String(localized: "Pause OpenSwipe"), action: #selector(togglePause), keyEquivalent: "")
+        pause.target = self
+        pause.state = preferences.isPaused ? .on : .off
         menu.addItem(.separator())
-        let accessibility = menu.addItem(
-            withTitle: Permissions.hasAccessibility ? "Accessibility: Granted" : "Accessibility: Not Granted…",
-            action: #selector(openAccessibilitySettings), keyEquivalent: "")
-        accessibility.target = self
-        let screenRecording = menu.addItem(
-            withTitle: Permissions.hasScreenRecording ? "Screen Recording: Granted" : "Screen Recording: Not Granted…",
-            action: #selector(openScreenRecordingSettings), keyEquivalent: "")
-        screenRecording.target = self
         menu.addItem(
-            withTitle: gestureTap.isRunning ? "Touch Input: Running" : "Touch Input: Waiting for Permission",
-            action: nil, keyEquivalent: "")
-        menu.addItem(.separator())
-        let live = menu.addItem(withTitle: "Live Switching", action: #selector(toggleLiveSwitching), keyEquivalent: "")
-        live.target = self
-        live.state = UserDefaults.standard.bool(forKey: SwitchController.liveSwitchingKey) ? .on : .off
-        let record = menu.addItem(withTitle: "Record Touches", action: #selector(toggleRecording), keyEquivalent: "")
-        record.target = self
-        record.state = recorder == nil ? .off : .on
-        menu.addItem(withTitle: "Show Logs in Finder", action: #selector(showLogs), keyEquivalent: "").target = self
-        menu.addItem(withTitle: "Quit OpenSwipe", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            withTitle: String(localized: "Quit OpenSwipe"), action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q")
     }
 
-    @objc private func openScreenRecordingSettings() {
-        Permissions.openScreenRecordingSettings()
+    @objc private func showSettings() {
+        settings.show()
     }
 
-    @objc private func openAccessibilitySettings() {
-        Permissions.openAccessibilitySettings()
-    }
-
-    @objc private func toggleLiveSwitching() {
-        let defaults = UserDefaults.standard
-        defaults.set(!defaults.bool(forKey: SwitchController.liveSwitchingKey), forKey: SwitchController.liveSwitchingKey)
-    }
-
-    @objc private func toggleRecording() {
-        let isOn = recorder == nil
-        UserDefaults.standard.set(isOn, forKey: Self.recordTouchesKey)
-        if isOn { startRecording() } else { recorder = nil }
-    }
-
-    @objc private func showLogs() {
-        NSWorkspace.shared.activateFileViewerSelecting([DiagnosticLog.directory])
+    @objc private func togglePause() {
+        preferences.isPaused.toggle()
     }
 }

@@ -12,6 +12,8 @@ final class SwitchController {
     private struct AppContents {
         let apps: [NSRunningApplication]
         let preparedAt: ContinuousClock.Instant
+        /// Whether Finder was left out for having no windows.
+        let hidesFinder: Bool
     }
 
     private struct WindowContents {
@@ -42,8 +44,6 @@ final class SwitchController {
         var inFront = 0
     }
 
-    static let liveSwitchingKey = "LiveSwitching"
-
     /// Rebuild app contents older than this when fingers land, in case something changed unnoticed,
     /// such as an app's icon.
     private static let appContentsLifetime = Duration.seconds(60)
@@ -51,6 +51,9 @@ final class SwitchController {
     private static let windowContentsLifetime = Duration.seconds(1)
 
     private let inputTap: SessionInputTap
+    private let trial: StepTrial
+    private let preferences = Preferences.shared
+    private let screenLock = ScreenLock()
     private let appPanel = SwitcherPanel()
     private let windowPanel = SwitcherPanel()
     private let cursor = CursorFreeze()
@@ -59,18 +62,20 @@ final class SwitchController {
     private let previews = WindowPreviews()
     private var windowContentsCount = 0
     private var previewCapture: Task<Void, Never>?
-    private let sessionSettings = SwitchSession.Settings()
     private let clock = ContinuousClock()
     private var recognizer = SwipeRecognizer()
     private var contents: AppContents?
     private var contentsCount = 0
     private var windowContents: WindowContents?
     private var session: Session?
+    /// A swipe over the Step trial strip in Settings, which moves its dots instead of a Switcher.
+    private var trialSession: SwitchSession?
     /// Dock badges by app bundle path, from the previous refresh, shown until fresh ones arrive.
     private var badges: [String: String] = [:]
 
-    init(inputTap: SessionInputTap) {
+    init(inputTap: SessionInputTap, trial: StepTrial) {
         self.inputTap = inputTap
+        self.trial = trial
         inputTap.onEscape = { [weak self] in self?.cancel() }
         appOrder.onChange = { [weak self] in self?.appsChanged() }
     }
@@ -110,9 +115,10 @@ final class SwitchController {
         switch recognizer.handle(frame) {
         case .armed(let fingers):
             guard session == nil else { return }
-            switch SwitcherKind(fingers: fingers) {
+            switch preferences.switcher(forFingers: fingers) {
             case .apps:
-                if let contents, clock.now - contents.preparedAt < Self.appContentsLifetime {
+                if let contents, clock.now - contents.preparedAt < Self.appContentsLifetime,
+                   contents.hidesFinder == shouldHideFinder() {
                     refreshBadges(apps: contents.apps, contents: contentsCount)
                 } else {
                     prepareApps()
@@ -123,17 +129,59 @@ final class SwitchController {
                 break
             }
         case .began(let fingers, let direction, let time):
-            guard let kind = SwitcherKind(fingers: fingers) else { return }
+            if trial.isUnderPointer {
+                trialSession = SwitchSession(
+                    itemCount: StepTrial.dots, direction: direction, began: time, settings: sessionSettings)
+                trial.selection = trialSession?.selection
+                return
+            }
+            guard !preferences.isPaused, !screenLock.isLocked, !preferences.isExcluded(appOrder.frontmost),
+                  let kind = preferences.switcher(forFingers: fingers)
+            else { return }
             begin(kind, direction: direction, at: time)
         case .moved(let travel):
+            if var trialSession {
+                if trialSession.move(travel: travel) { trial.selection = trialSession.selection }
+                self.trialSession = trialSession
+                return
+            }
             guard var session, session.selection.move(travel: travel) else { return }
             session.panel.select(session.selection.selection)
             bringForward(session.selection.selection, in: &session)
             self.session = session
         case .ended(let time):
+            if trialSession != nil {
+                trialSession = nil
+                trial.selection = nil
+                return
+            }
             end(at: time)
         case nil:
             break
+        }
+    }
+
+    private var sessionSettings: SwitchSession.Settings {
+        var settings = SwitchSession.Settings()
+        settings.stepLength = preferences.stepLength
+        return settings
+    }
+
+    /// Whether the App Switcher should leave out Finder now: it is set to, Finder has no windows,
+    /// minimized or on any Space, and isn't the Active App.
+    private func shouldHideFinder() -> Bool {
+        guard preferences.hideFinderWithoutWindows,
+              let finder = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").first,
+              appOrder.frontmost != finder
+        else { return false }
+        let windows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        return !windows.contains { window in
+            guard window[kCGWindowOwnerPID as String] as? pid_t == finder.processIdentifier,
+                  window[kCGWindowLayer as String] as? Int == 0,
+                  let bounds = window[kCGWindowBounds as String] as? [String: CGFloat]
+            else { return false }
+            return (bounds["Width"] ?? 0) > 50 && (bounds["Height"] ?? 0) > 50
         }
     }
 
@@ -208,7 +256,8 @@ final class SwitchController {
     @discardableResult
     private func prepareApps() -> AppContents {
         let started = clock.now
-        let apps = appOrder.apps()
+        let hidesFinder = shouldHideFinder()
+        let apps = appOrder.apps().filter { !(hidesFinder && $0.bundleIdentifier == "com.apple.finder") }
         let paths = apps.map { $0.bundleURL.map(DockBadges.path(of:)) }
         let listed = clock.now
         appPanel.prepare(
@@ -224,7 +273,7 @@ final class SwitchController {
         #endif
         contentsCount += 1
         refreshBadges(apps: apps, contents: contentsCount)
-        let contents = AppContents(apps: apps, preparedAt: clock.now)
+        let contents = AppContents(apps: apps, preparedAt: clock.now, hidesFinder: hidesFinder)
         self.contents = contents
         return contents
     }
@@ -291,7 +340,7 @@ final class SwitchController {
         cursor.hide()
         inputTap.isEnabled = true
         var session = Session(targets: targets, panel: panel, selection: selection)
-        if UserDefaults.standard.bool(forKey: Self.liveSwitchingKey) {
+        if preferences.liveSwitching {
             session.passable = Self.passableItems(targets)
             if case .apps = targets { appOrder.freeze() }
             bringForward(selection.selection, in: &session)

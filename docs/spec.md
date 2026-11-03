@@ -158,6 +158,6 @@ Measured on macOS 27.0.1 with a 16-inch MacBook Pro on 2026-11-03:
 ## Open questions
 
 - Do gesture taps keep working after sleep?
-- Can Mission Control be detected without private APIs?
+- Can Mission Control be detected without private APIs? Until then, a session can start while it is open.
 - Do three- and four-finger movements leak scroll events to the app under the pointer?
 - Does the Screen Recording re-approval prompt still appear on macOS 26 and 27?

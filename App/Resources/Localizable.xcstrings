@@ -1,0 +1,506 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Accessibility": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Универсальный доступ"
+          }
+        }
+      }
+    },
+    "Add App…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить приложение…"
+          }
+        }
+      }
+    },
+    "App Switcher": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключатель приложений"
+          }
+        }
+      }
+    },
+    "Diagnostics": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Диагностика"
+          }
+        }
+      }
+    },
+    "Excluded Apps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исключённые приложения"
+          }
+        }
+      }
+    },
+    "Four fingers for apps, three for windows.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Четыре пальца для приложений, три для окон."
+          }
+        }
+      }
+    },
+    "General": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Основные"
+          }
+        }
+      }
+    },
+    "Granted": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешено"
+          }
+        }
+      }
+    },
+    "Hide Finder when it has no windows": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывать Finder, когда у него нет окон"
+          }
+        }
+      }
+    },
+    "How far the fingers travel to move the selection by one item.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сколько должны пройти пальцы, чтобы выделение сдвинулось на один элемент."
+          }
+        }
+      }
+    },
+    "Launch at login": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запускать при входе в систему"
+          }
+        }
+      }
+    },
+    "Live Switching": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Живое переключение"
+          }
+        }
+      }
+    },
+    "No excluded apps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет исключённых приложений"
+          }
+        }
+      }
+    },
+    "No trackpad gestures conflict with OpenSwipe.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жесты трекпада не мешают OpenSwipe."
+          }
+        }
+      }
+    },
+    "No windows": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет окон"
+          }
+        }
+      }
+    },
+    "Open Accessibility Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки Универсального доступа"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Системные настройки"
+          }
+        }
+      }
+    },
+    "OpenSwipe Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки OpenSwipe"
+          }
+        }
+      }
+    },
+    "Optional, for window previews. Takes effect after OpenSwipe restarts.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Необязательно, для превью окон. Действует после перезапуска OpenSwipe."
+          }
+        }
+      }
+    },
+    "Pause OpenSwipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приостановить OpenSwipe"
+          }
+        }
+      }
+    },
+    "Permissions": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешения"
+          }
+        }
+      }
+    },
+    "Quit OpenSwipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завершить OpenSwipe"
+          }
+        }
+      }
+    },
+    "Record touches": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывать касания"
+          }
+        }
+      }
+    },
+    "Remove": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить"
+          }
+        }
+      }
+    },
+    "Required to read swipes and switch windows.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нужен, чтобы читать свайпы и переключать окна."
+          }
+        }
+      }
+    },
+    "Restart OpenSwipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перезапустить OpenSwipe"
+          }
+        }
+      }
+    },
+    "Restore Original Gestures": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вернуть исходные жесты"
+          }
+        }
+      }
+    },
+    "Screen Recording": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись экрана"
+          }
+        }
+      }
+    },
+    "Settings…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки…"
+          }
+        }
+      }
+    },
+    "Show Logs in Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать логи в Finder"
+          }
+        }
+      }
+    },
+    "Show icon in the menu bar": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать значок в строке меню"
+          }
+        }
+      }
+    },
+    "Step": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шаг"
+          }
+        }
+      }
+    },
+    "Step length": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Длина шага"
+          }
+        }
+      }
+    },
+    "Swap finger counts": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поменять местами число пальцев"
+          }
+        }
+      }
+    },
+    "Swipe here with three or four fingers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Проведите здесь тремя или четырьмя пальцами"
+          }
+        }
+      }
+    },
+    "Swipe sideways with four fingers.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп в сторону четырьмя пальцами."
+          }
+        }
+      }
+    },
+    "Swipe sideways with three fingers.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп в сторону тремя пальцами."
+          }
+        }
+      }
+    },
+    "Swipes do nothing while one of these apps is in front, for games and apps with their own gestures.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока одно из этих приложений на переднем плане, свайпы ничего не делают. Подходит для игр и приложений со своими жестами."
+          }
+        }
+      }
+    },
+    "Swiping with four fingers switches between full-screen apps.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп четырьмя пальцами переключает полноэкранные приложения."
+          }
+        }
+      }
+    },
+    "Swiping with three fingers goes back and forward between pages.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп тремя пальцами листает страницы назад и вперёд."
+          }
+        }
+      }
+    },
+    "Swiping with three fingers switches between full-screen apps.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп тремя пальцами переключает полноэкранные приложения."
+          }
+        }
+      }
+    },
+    "Switch the moment the selection moves, without waiting for the fingers to lift.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключать, как только сдвинулось выделение, не дожидаясь, пока пальцы оторвутся."
+          }
+        }
+      }
+    },
+    "Switchers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключатели"
+          }
+        }
+      }
+    },
+    "Three-finger drag is on. Turn it off in Accessibility settings, or swap finger counts and turn off the three-finger Switcher.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включено перетаскивание тремя пальцами. Отключите его в настройках Универсального доступа или поменяйте число пальцев местами и отключите переключатель на трёх пальцах."
+          }
+        }
+      }
+    },
+    "Trackpad Gestures": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жесты трекпада"
+          }
+        }
+      }
+    },
+    "Turn Off Conflicting Gestures": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отключить мешающие жесты"
+          }
+        }
+      }
+    },
+    "When hidden, open OpenSwipe again to see these settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если значок скрыт, откройте OpenSwipe ещё раз, чтобы увидеть эти настройки."
+          }
+        }
+      }
+    },
+    "Window Switcher": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключатель окон"
+          }
+        }
+      }
+    },
+    "Writes every trackpad touch to a log, for bug reports.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывает каждое касание трекпада в лог, для отчётов об ошибках."
+          }
+        }
+      }
+    },
+    "macOS gestures that use the same swipes take them before OpenSwipe can.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Жесты macOS на тех же свайпах перехватывают их раньше OpenSwipe."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

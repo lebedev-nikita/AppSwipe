@@ -1,6 +1,7 @@
 name: OpenSwipe
 options:
   bundleIdPrefix: io.github.lebedev-nikita
+  developmentLanguage: en
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
@@ -16,11 +17,13 @@ settings:
     # which Xcode does not list because it is self-signed.
     CODE_SIGNING_ALLOWED: NO
     ENABLE_DEBUG_DYLIB: NO
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
 targets:
   OpenSwipe:
     type: application
     platform: macOS
-    sources: [App/Sources]
+    sources: [App/Sources, App/Resources]
     dependencies:
       - package: SwitchCore
     settings:
