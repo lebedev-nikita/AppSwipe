@@ -9,11 +9,11 @@ An overlay listing Items that stays open for the length of a Switch Session. Eit
 _Avoid_: Menu, popup, HUD
 
 **App Switcher**:
-The Switcher opened by a three-finger horizontal swipe. It lists running apps as icons in most-recently-used order, the counterpart of Cmd-Tab.
+The Switcher opened by a three-finger horizontal swipe, or four-finger if the finger counts are swapped. It lists running apps as icons in most-recently-used order, the counterpart of Cmd-Tab.
 _Avoid_: Cmd-Tab menu, app menu
 
 **Window Switcher**:
-The Switcher opened by a four-finger horizontal swipe. It lists only the Active App's windows on the Current Space, as Window Previews, the counterpart of Cmd-` with a visible list.
+The Switcher opened by a four-finger horizontal swipe, or three-finger if the finger counts are swapped. It lists only the Active App's windows on the Current Space, as Window Previews, the counterpart of Cmd-` with a visible list.
 _Avoid_: Window menu, Cmd-` menu, Exposé
 
 **Item**:

@@ -4,14 +4,14 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 
 ## Switchers
 
-### App Switcher (three fingers)
+### App Switcher (three fingers by default)
 
 - Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded.
 - Order: most recently used first, so the Active App is the Current Item.
 - Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
 - Commit activates the app, brings all its windows forward, and unhides it if hidden. If the app has no visible window, Commit behaves like a click on its Dock icon: it restores the most recent minimized window, or lets the app open a new one.
 
-### Window Switcher (four fingers)
+### Window Switcher (four fingers by default)
 
 - Items: the Active App's windows on the **Current Space**. That means ordinary windows, dialogs, and panels such as tool palettes.
 - Excluded:
@@ -50,7 +50,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 Constraints:
 
 - v1 has no other actions during a session: no quit, hide, or close, and no opening an app's windows from the App Switcher. Vertical finger movement is reserved for such actions later.
-- A session does not start while Mission Control or App Exposé is open, while the screen is locked, or while OpenSwipe is paused.
+- A session does not start while Mission Control or App Exposé is open, while the screen is locked, while OpenSwipe is paused, or while an excluded app is frontmost.
 - Keyboard Cmd-Tab and Cmd-` are left to the system. OpenSwipe only listens to Esc, and only during a session.
 
 ## App shell
@@ -61,11 +61,19 @@ OpenSwipe is a menu bar agent with no Dock icon. Its menu bar icon offers Settin
 
 ### Settings
 
+Settings stay few on purpose. The opening travel, the Quick Switch window and the panel's look come from measurements and the native switcher, and a control for them could only make things worse.
+
 - Launch at login.
-- Step length.
+- Show the menu bar icon.
 - Enable or disable each Switcher.
+- Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
+- Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
+- Excluded apps. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews.
 - Gesture conflicts, described below.
+- Diagnostics: recording touches, and showing the logs, for bug reports.
+
+Options for the Window Switcher, such as hiding minimized windows, wait until it exists. There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
 
 The first launch opens Settings.
 
@@ -77,7 +85,7 @@ OpenSwipe detects these conflicting system settings:
 - three-finger swipe between pages;
 - three-finger drag.
 
-A "Turn off" button rewrites the trackpad preferences and applies them without a logout. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Three-finger drag lives in Accessibility settings, so OpenSwipe only warns about it.
+A "Turn off" button rewrites the trackpad preferences and applies them without a logout. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Three-finger drag lives in Accessibility settings, so OpenSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
 
 ### Language
 
@@ -103,7 +111,7 @@ The interface is in English, with a Russian localization.
 - Windows on other Spaces.
 - Actions inside a session.
 - Keyboard switching.
-- Remapping finger counts.
+- Gestures other than three- and four-finger horizontal swipes.
 - The App Store.
 - Signed and notarized releases, which come later through GitHub Releases with a Developer ID.
 - Suppressing system gestures by swallowing Dock events.
