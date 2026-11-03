@@ -152,7 +152,7 @@ private final class ItemView: NSView {
     private let badgeView = BadgeView()
 
     var isSelected = false {
-        didSet { if isSelected != oldValue { needsDisplay = true } }
+        didSet { if isSelected != oldValue { updateSelection() } }
     }
 
     var badge: String? {
@@ -166,6 +166,7 @@ private final class ItemView: NSView {
     init(image: NSImage, iconSize: CGFloat) {
         imageView = NSImageView(image: image)
         imageView.imageScaling = .scaleProportionallyUpOrDown
+        imageView.wantsLayer = true
         self.iconSize = iconSize
         super.init(frame: .zero)
         addSubview(imageView)
@@ -195,12 +196,18 @@ private final class ItemView: NSView {
         badgeView.isHidden = badgeView.text == nil
     }
 
-    override func draw(_ dirtyRect: NSRect) {
-        guard isSelected else { return }
+    /// The Selection is a thin shadow that hugs the icon's own outline.
+    private func updateSelection() {
+        guard isSelected else {
+            imageView.shadow = nil
+            return
+        }
         let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        (isDark ? NSColor.white.withAlphaComponent(0.2) : NSColor.black.withAlphaComponent(0.24)).setFill()
-        let radius = (iconSize * 0.07).rounded()
-        NSBezierPath(roundedRect: bounds, xRadius: radius, yRadius: radius).fill()
+        let shadow = NSShadow()
+        shadow.shadowOffset = .zero
+        shadow.shadowBlurRadius = max(2, (iconSize * 0.045).rounded())
+        shadow.shadowColor = isDark ? .white : .black
+        imageView.shadow = shadow
     }
 }
 
