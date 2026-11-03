@@ -1,0 +1,33 @@
+name: OpenSwipe
+options:
+  bundleIdPrefix: io.github.lebedev-nikita
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  SwitchCore:
+    path: SwitchCore
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    # Builds are signed by `just build` with the local "OpenSwipe Development" certificate,
+    # which Xcode does not list because it is self-signed.
+    CODE_SIGNING_ALLOWED: NO
+    ENABLE_DEBUG_DYLIB: NO
+targets:
+  OpenSwipe:
+    type: application
+    platform: macOS
+    sources: [App/Sources]
+    dependencies:
+      - package: SwitchCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.lebedev-nikita.OpenSwipe
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: OpenSwipe
+        INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 Lebedev Nikita. MIT License."

@@ -44,6 +44,7 @@ OpenSwipe switches apps and windows with horizontal trackpad swipes. Terms in **
 4. On a Force Touch trackpad, each Step plays a short haptic tick. This is on by default and can be turned off.
 5. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.
 6. **Cancel** means committing while the Current Item is selected, or pressing Esc.
+7. The Switcher appears about 200 ms after the session starts, like the native switcher on a held Cmd-Tab. Lifting the fingers before then is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 100–170 ms and covered 21–41 mm, while deliberate swipes took 540–750 ms.
 
 Constraints:
 
@@ -118,10 +119,19 @@ The interface is in English, with a Russian localization.
 5. Window Previews.
 6. Settings, gesture conflicts, permission status, launch at login, haptics.
 
-## Open questions for the spike
+## Spike findings
 
-- Do gesture event taps deliver reliable touches on macOS 27, including after sleep?
-- Does `activateSettings -u` apply trackpad preference changes without a logout?
+Measured on macOS 27.0.1 with a 16-inch MacBook Pro on 2026-11-03:
+
+- A listen-only gesture tap is created without any permission, but receives nothing until Accessibility is granted. Input Monitoring is not needed. A tap created before the grant stays silent, so the app re-creates it when permissions change.
+- Gesture events deliver three- and four-finger touches at about 126 Hz. `NSTouch.deviceSize` reports the surface as 157×97 mm.
+- Fingers lift one by one, 7–30 ms apart.
+- Rewriting the trackpad preferences and running `activateSettings -u` turns off the system's horizontal swipes without a logout.
+- Accessibility grants survive rebuilds signed with the self-signed certificate.
+
+## Open questions
+
+- Do gesture taps keep working after sleep?
 - Can an agent app reliably activate another app with public APIs on macOS 14 and later?
 - Can Mission Control be detected without private APIs?
 - Do three- and four-finger movements leak scroll events to the app under the pointer?

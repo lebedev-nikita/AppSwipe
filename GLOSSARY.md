@@ -57,3 +57,7 @@ _Avoid_: Confirm, release, accept
 **Cancel**:
 Ending a Switch Session without switching: lifting the fingers with the Current Item selected, or pressing Esc.
 _Avoid_: Abort, dismiss
+
+**Quick Switch**:
+A Switch Session whose fingers lift before the Switcher appears. It always Commits to the second Item, the counterpart of a quick Cmd-Tab tap.
+_Avoid_: Flick, quick tap
