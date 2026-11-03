@@ -11,28 +11,40 @@ final class SwitcherPanel {
         var badge: String?
     }
 
-    private struct Metrics {
-        static let maxIcon: CGFloat = 88
+    /// Measured from the native switcher on macOS 27, in multiples of the icon artwork's size.
+    struct Metrics {
+        /// The artwork of a 128 pt icon, the native switcher's largest size.
+        static let maxIcon: CGFloat = 103
         static let minIcon: CGFloat = 40
         static let screenFraction: CGFloat = 0.85
         static let titleFontSize: CGFloat = 13
-        /// From the bottom of the row to the title's baseline.
+        /// From the bottom of the highlights to the title's baseline.
         static let titleBaseline: CGFloat = 17
         /// From the title's baseline to the bottom of the panel.
-        static let bottomPadding: CGFloat = 6
+        static let bottomPadding: CGFloat = 10
+
+        private static let pitchRatio: CGFloat = 1.29
+        private static let insetRatio: CGFloat = 0.074
+        private static let paddingRatio: CGFloat = 0.272
 
         /// Size of an icon's visible artwork, without the transparent margins around it.
         let icon: CGFloat
-        var cell: CGFloat { (icon * 1.3).rounded() }
-        var horizontalPadding: CGFloat { (icon * 0.18).rounded() }
-        var topPadding: CGFloat { (icon * 0.25).rounded() }
-        var cornerRadius: CGFloat { (icon * 0.21).rounded() }
+        /// Distance between the centres of neighbouring Items.
+        var pitch: CGFloat { (icon * Self.pitchRatio).rounded() }
+        /// Margin between an icon's artwork and the edge of its highlight.
+        var inset: CGFloat { (icon * Self.insetRatio).rounded() }
+        var highlight: CGFloat { icon + 2 * inset }
+        /// From the panel's edge to the nearest highlight.
+        var padding: CGFloat { (icon * Self.paddingRatio).rounded() }
+        /// Corners are concentric: the highlight's wraps the icon's, the panel's wraps the highlight's.
+        var highlightCornerRadius: CGFloat { icon * 0.225 + inset }
+        var panelCornerRadius: CGFloat { highlightCornerRadius + padding }
 
         /// The largest icon that fits `count` Items into `width`, within the size limits.
         init(fitting count: Int, into width: CGFloat) {
             let count = CGFloat(max(count, 1))
-            let fitting = (width - 2 * 0.18 * Self.maxIcon) / count / 1.3
-            icon = min(Self.maxIcon, max(Self.minIcon, fitting)).rounded(.down)
+            let width = width / (2 * Self.paddingRatio + (count - 1) * Self.pitchRatio + 1 + 2 * Self.insetRatio)
+            icon = min(Self.maxIcon, max(Self.minIcon, width)).rounded(.down)
         }
     }
 
@@ -57,6 +69,8 @@ final class SwitcherPanel {
         panel.ignoresMouseEvents = true
         panel.hidesOnDeactivate = false
 
+        // A light tint, to match the native switcher's slightly darker glass.
+        glass.tintColor = NSColor(white: 0, alpha: 0.06)
         let content = NSView()
         glass.contentView = content
         panel.contentView = glass
@@ -67,7 +81,7 @@ final class SwitcherPanel {
         content.addSubview(scrollView)
 
         titleField.alignment = .center
-        titleField.font = .systemFont(ofSize: Metrics.titleFontSize)
+        titleField.font = .systemFont(ofSize: Metrics.titleFontSize, weight: .bold)
         titleField.textColor = .labelColor
         titleField.lineBreakMode = .byTruncatingTail
         content.addSubview(titleField)
@@ -80,26 +94,28 @@ final class SwitcherPanel {
             ?? NSScreen.main ?? NSScreen.screens[0]
         let maxWidth = screen.visibleFrame.width * Metrics.screenFraction
         metrics = Metrics(fitting: items.count, into: maxWidth)
-        let cell = metrics.cell
-        let rowWidth = CGFloat(items.count) * cell
-        let visibleRowWidth = min(max(rowWidth, cell), maxWidth - 2 * metrics.horizontalPadding)
+        let pitch = metrics.pitch
+        let highlight = metrics.highlight
+        // Each Item spans one pitch; its highlight sits in the middle, leaving a gap to the next one.
+        let sideGap = (pitch - highlight) / 2
+        let edge = metrics.padding - sideGap
+        let rowWidth = CGFloat(items.count) * pitch
+        let visibleRowWidth = min(max(rowWidth, pitch), maxWidth - 2 * edge)
 
         itemViews.forEach { $0.removeFromSuperview() }
         itemViews = items.enumerated().map { index, item in
-            let view = ItemView(image: item.image, iconSize: metrics.icon)
+            let view = ItemView(image: item.image, metrics: metrics)
             view.badge = item.badge
-            view.frame = NSRect(x: CGFloat(index) * cell, y: 0, width: cell, height: cell)
+            view.frame = NSRect(x: CGFloat(index) * pitch, y: 0, width: pitch, height: highlight)
             row.addSubview(view)
             return view
         }
-        row.frame = NSRect(x: 0, y: 0, width: rowWidth, height: cell)
+        row.frame = NSRect(x: 0, y: 0, width: rowWidth, height: highlight)
 
         let bottom = Metrics.bottomPadding + Metrics.titleBaseline
-        let size = NSSize(
-            width: visibleRowWidth + 2 * metrics.horizontalPadding,
-            height: metrics.topPadding + cell + bottom)
-        scrollView.frame = NSRect(x: metrics.horizontalPadding, y: bottom, width: visibleRowWidth, height: cell)
-        glass.cornerRadius = metrics.cornerRadius
+        let size = NSSize(width: visibleRowWidth + 2 * edge, height: metrics.padding + highlight + bottom)
+        scrollView.frame = NSRect(x: edge, y: bottom, width: visibleRowWidth, height: highlight)
+        glass.cornerRadius = metrics.panelCornerRadius
         let frame = screen.frame
         panel.setFrame(
             NSRect(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2,
@@ -149,14 +165,11 @@ final class SwitcherPanel {
 private final class ItemView: NSView {
     /// Share of an app icon's canvas that its artwork covers: 824 of 1024 points on Apple's icon grid.
     private static let artworkFraction: CGFloat = 0.805
-    /// Corner radius of the icon shape, relative to the artwork's size.
-    private static let cornerFraction: CGFloat = 0.225
-    private static let outlineWidth: CGFloat = 2
 
     private let imageView: NSImageView
-    private let outlineView = NSView()
-    private let iconSize: CGFloat
+    private let highlightView = NSView()
     private let badgeView = BadgeView()
+    private let metrics: SwitcherPanel.Metrics
 
     var isSelected = false {
         didSet { if isSelected != oldValue { updateSelection() } }
@@ -170,16 +183,17 @@ private final class ItemView: NSView {
         }
     }
 
-    init(image: NSImage, iconSize: CGFloat) {
+    init(image: NSImage, metrics: SwitcherPanel.Metrics) {
         imageView = NSImageView(image: image)
         imageView.imageScaling = .scaleProportionallyUpOrDown
-        self.iconSize = iconSize
+        self.metrics = metrics
         super.init(frame: .zero)
-        outlineView.wantsLayer = true
-        outlineView.layer?.cornerCurve = .continuous
-        outlineView.isHidden = true
+        highlightView.wantsLayer = true
+        highlightView.layer?.cornerCurve = .continuous
+        highlightView.layer?.cornerRadius = metrics.highlightCornerRadius
+        highlightView.isHidden = true
+        addSubview(highlightView)
         addSubview(imageView)
-        addSubview(outlineView)
         addSubview(badgeView)
     }
 
@@ -188,16 +202,15 @@ private final class ItemView: NSView {
 
     override func layout() {
         super.layout()
+        let iconSize = metrics.icon
+        let highlight = metrics.highlight
+        highlightView.frame = NSRect(
+            x: (bounds.width - highlight) / 2, y: (bounds.height - highlight) / 2, width: highlight, height: highlight)
         let canvas = (iconSize / Self.artworkFraction).rounded()
         imageView.frame = NSRect(
             x: (bounds.width - canvas) / 2, y: (bounds.height - canvas) / 2, width: canvas, height: canvas)
         let icon = NSRect(
             x: (bounds.width - iconSize) / 2, y: (bounds.height - iconSize) / 2, width: iconSize, height: iconSize)
-        // The outline wraps the icon shape from outside, touching its edge.
-        let width = Self.outlineWidth
-        outlineView.frame = icon.insetBy(dx: -width, dy: -width)
-        outlineView.layer?.cornerRadius = iconSize * Self.cornerFraction + width
-        outlineView.layer?.borderWidth = width
         // Like the Dock, the badge sits over the icon's top-right corner.
         let badgeHeight = (iconSize * 0.44).rounded()
         let badgeWidth = max(badgeHeight, badgeView.textWidth(forHeight: badgeHeight) + badgeHeight * 0.6)
@@ -208,12 +221,12 @@ private final class ItemView: NSView {
         badgeView.isHidden = badgeView.text == nil
     }
 
-    /// The Selection is a hard outline around the icon shape.
     private func updateSelection() {
-        outlineView.isHidden = !isSelected
+        highlightView.isHidden = !isSelected
         guard isSelected else { return }
         let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        outlineView.layer?.borderColor = (isDark ? NSColor.white : NSColor.black).withAlphaComponent(0.85).cgColor
+        highlightView.layer?.backgroundColor =
+            (isDark ? NSColor.white.withAlphaComponent(0.2) : NSColor.black.withAlphaComponent(0.25)).cgColor
     }
 }
 
