@@ -1,4 +1,5 @@
 import AppKit
+import SwitchCore
 
 @main
 @MainActor
@@ -13,8 +14,12 @@ enum Main {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    private let recorder = TouchRecorder()
-    private lazy var gestureTap = GestureEventTap { [recorder] frame in recorder.record(frame) }
+    private static let recordTouchesKey = "RecordTouches"
+
+    private let sessionInputTap = SessionInputTap()
+    private lazy var switchController = SwitchController(inputTap: sessionInputTap)
+    private lazy var gestureTap = GestureEventTap { [weak self] frame in self?.handle(frame) }
+    private var recorder: TouchRecorder?
     private let eventTypeProbe = EventTypeProbe()
     private var statusItem: NSStatusItem?
 
@@ -25,9 +30,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             "launched OpenSwipe \(version) on \(ProcessInfo.processInfo.operatingSystemVersionString); "
                 + "accessibility \(Permissions.hasAccessibility), input monitoring \(Permissions.canListenToInput)")
         setUpStatusItem()
+        if UserDefaults.standard.bool(forKey: Self.recordTouchesKey) { startRecording() }
         Permissions.requestAccessibility()
-        startGestureTap()
+        startInputTaps()
         watchPermissions()
+        #if DEBUG
+        let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
+        if preview > 0 { switchController.preview(selection: preview) }
+        if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
+        #endif
+    }
+
+    #if DEBUG
+    /// Hides the cursor the public way, then with `BackgroundCursor`, three seconds each.
+    private func probeCursorHiding() {
+        Task {
+            let location = NSEvent.mouseLocation
+            DiagnosticLog.write("cursor probe: pointer at \(location.x), \(location.y); public hide")
+            CGDisplayHideCursor(CGMainDisplayID())
+            try? await Task.sleep(for: .seconds(3))
+            CGDisplayShowCursor(CGMainDisplayID())
+            try? await Task.sleep(for: .seconds(1))
+            DiagnosticLog.write("cursor probe: private property set \(BackgroundCursor.allowHiding()); hide")
+            CGDisplayHideCursor(CGMainDisplayID())
+            try? await Task.sleep(for: .seconds(3))
+            CGDisplayShowCursor(CGMainDisplayID())
+            DiagnosticLog.write("cursor probe: done")
+        }
+    }
+    #endif
+
+    private func handle(_ frame: TouchFrame) {
+        recorder?.record(frame)
+        switchController.handle(frame)
     }
 
     /// Logs permission changes and reinstalls the tap when they happen, since a tap created
@@ -42,16 +77,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 state = current
                 DiagnosticLog.write("permissions changed: accessibility \(current.0), input monitoring \(current.1)")
                 gestureTap.stop()
-                startGestureTap()
+                sessionInputTap.uninstall()
+                startInputTaps()
             }
         }
     }
 
-    /// The tap can only be created once the user grants access, so keep trying until then.
-    private func startGestureTap() {
+    /// The taps can only be created once the user grants access, so keep trying until then.
+    private func startInputTaps() {
         Task {
             var loggedWait = false
-            while !gestureTap.start() {
+            // The session tap goes first; see `SessionInputTap.install()`.
+            while !(sessionInputTap.install() && gestureTap.start()) {
                 if !loggedWait {
                     DiagnosticLog.write("gesture tap unavailable, waiting for permission")
                     loggedWait = true
@@ -59,10 +96,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try? await Task.sleep(for: .seconds(1))
             }
             DiagnosticLog.write(
-                "gesture tap installed; accessibility \(Permissions.hasAccessibility), "
+                "input taps installed; accessibility \(Permissions.hasAccessibility), "
                     + "input monitoring \(Permissions.canListenToInput)")
-            _ = eventTypeProbe.start()
         }
+    }
+
+    private func startRecording() {
+        recorder = recorder ?? TouchRecorder()
+        if !eventTypeProbe.start() { DiagnosticLog.write("event type probe unavailable") }
     }
 
     // MARK: - Status item
@@ -88,12 +129,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             withTitle: gestureTap.isRunning ? "Touch Input: Running" : "Touch Input: Waiting for Permission",
             action: nil, keyEquivalent: "")
         menu.addItem(.separator())
+        let record = menu.addItem(withTitle: "Record Touches", action: #selector(toggleRecording), keyEquivalent: "")
+        record.target = self
+        record.state = recorder == nil ? .off : .on
         menu.addItem(withTitle: "Show Logs in Finder", action: #selector(showLogs), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Quit OpenSwipe", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
     }
 
     @objc private func openAccessibilitySettings() {
         Permissions.openAccessibilitySettings()
+    }
+
+    @objc private func toggleRecording() {
+        let isOn = recorder == nil
+        UserDefaults.standard.set(isOn, forKey: Self.recordTouchesKey)
+        if isOn { startRecording() } else { recorder = nil }
     }
 
     @objc private func showLogs() {
