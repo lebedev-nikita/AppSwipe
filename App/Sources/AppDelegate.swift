@@ -37,7 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         watchPermissions()
         #if DEBUG
         let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
-        if preview > 0 { switchController.preview(selection: preview) }
+        if preview > 0 { switchController.preview(.apps, selection: preview) }
+        let windowPreview = UserDefaults.standard.integer(forKey: "PreviewWindowSwitcher")
+        if windowPreview > 0 { switchController.preview(.windows, selection: windowPreview) }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
         if UserDefaults.standard.bool(forKey: "GlassTest") {
             switchController.glassTest(native: UserDefaults.standard.bool(forKey: "GlassTestNative"))

@@ -9,6 +9,8 @@ final class SwitcherPanel {
         let image: NSImage
         let title: String
         var badge: String?
+        /// Drawn faded, as for a minimized window.
+        var isDimmed = false
     }
 
     /// Measured from the native switcher on macOS 27, in multiples of the icon artwork's size.
@@ -107,6 +109,7 @@ final class SwitcherPanel {
         itemViews = items.enumerated().map { index, item in
             let view = ItemView(image: item.image, metrics: metrics)
             view.badge = item.badge
+            view.isDimmed = item.isDimmed
             view.frame = NSRect(x: CGFloat(index) * pitch, y: 0, width: pitch, height: highlight)
             row.addSubview(view)
             return view
@@ -174,6 +177,10 @@ private final class ItemView: NSView {
 
     var isSelected = false {
         didSet { if isSelected != oldValue { updateSelection() } }
+    }
+
+    var isDimmed = false {
+        didSet { imageView.alphaValue = isDimmed ? 0.45 : 1 }
     }
 
     var badge: String? {

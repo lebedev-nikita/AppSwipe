@@ -39,6 +39,11 @@ final class AppOrder {
         }
     }
 
+    /// The most recently activated app, which is the frontmost one outside Live Switching.
+    var frontmost: NSRunningApplication? {
+        order.lazy.compactMap { self.running[$0] }.first { !$0.isTerminated }
+    }
+
     /// The apps to show in the App Switcher. The frontmost app comes first.
     func apps() -> [NSRunningApplication] {
         // Apps that launched without ever activating go last.

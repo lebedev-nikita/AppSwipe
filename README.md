@@ -4,7 +4,7 @@
 
 A macOS app that switches apps and windows with trackpad swipes. A three-finger horizontal swipe opens an app switcher like Cmd-Tab; a four-finger swipe opens a switcher for the active app's windows. The switcher follows your fingers, and lifting them switches.
 
-**Status:** early development. The three-finger App Switcher works; the four-finger Window Switcher is next. See the [specification](docs/spec.md) for the plan.
+**Status:** early development. The three-finger App Switcher works; the four-finger Window Switcher works with app icons in place of window previews, which come next. See the [specification](docs/spec.md) for the plan.
 
 ## Build and run
 
