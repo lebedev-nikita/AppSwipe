@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%lld mm": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld мм"
+          }
+        }
+      }
+    },
     "Accessibility": {
       "localizations": {
         "ru": {
@@ -11,12 +21,22 @@
         }
       }
     },
-    "Add App…": {
+    "Add App": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Добавить приложение…"
+            "value": "Добавить приложение"
+          }
+        }
+      }
+    },
+    "Allow AppSwipe under Login Items in System Settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите AppSwipe в разделе «Объекты входа» Системных настроек."
           }
         }
       }
@@ -27,6 +47,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переключатель приложений"
+          }
+        }
+      }
+    },
+    "AppSwipe Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Настройки AppSwipe"
+          }
+        }
+      }
+    },
+    "Both Switchers are off, so swipes do nothing.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оба переключателя выключены, поэтому свайпы ничего не делают."
+          }
+        }
+      }
+    },
+    "Close": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Закрыть"
+          }
+        }
+      }
+    },
+    "Couldn't change this: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось изменить: %@"
           }
         }
       }
@@ -121,6 +181,16 @@
         }
       }
     },
+    "Minimize": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свернуть"
+          }
+        }
+      }
+    },
     "No excluded apps": {
       "localizations": {
         "ru": {
@@ -161,6 +231,16 @@
         }
       }
     },
+    "Open Login Items Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть настройки объектов входа"
+          }
+        }
+      }
+    },
     "Open System Settings": {
       "localizations": {
         "ru": {
@@ -171,22 +251,22 @@
         }
       }
     },
-    "AppSwipe Settings": {
+    "Optional, for window previews. Takes effect after AppSwipe restarts: quit it with ⌘Q and open it again.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Настройки AppSwipe"
+            "value": "Необязательно, для превью окон. Действует после перезапуска AppSwipe: завершите его по ⌘Q и откройте снова."
           }
         }
       }
     },
-    "Optional, for window previews. Takes effect after AppSwipe restarts.": {
+    "Other App…": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Необязательно, для превью окон. Действует после перезапуска AppSwipe."
+            "value": "Другое приложение…"
           }
         }
       }
@@ -251,12 +331,12 @@
         }
       }
     },
-    "Restart AppSwipe": {
+    "Required to read swipes and switch windows. If AppSwipe is already on in the list, remove it with the − button and add it again.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Перезапустить AppSwipe"
+            "value": "Нужен, чтобы читать свайпы и переключать окна. Если AppSwipe в списке уже включён, удалите его кнопкой − и добавьте снова."
           }
         }
       }
@@ -371,6 +451,16 @@
         }
       }
     },
+    "Swipes do nothing until AppSwipe is resumed.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайпы ничего не делают, пока AppSwipe не возобновят."
+          }
+        }
+      }
+    },
     "Swipes do nothing while one of these apps is in front, for games and apps with their own gestures.": {
       "localizations": {
         "ru": {
@@ -461,12 +551,42 @@
         }
       }
     },
-    "When hidden, open AppSwipe again to see these settings.": {
+    "Turn off the conflicting trackpad gestures above first, or macOS takes the swipe.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Если значок скрыт, откройте AppSwipe ещё раз, чтобы увидеть эти настройки."
+            "value": "Сначала отключите мешающие жесты трекпада выше, иначе свайп перехватит macOS."
+          }
+        }
+      }
+    },
+    "Turning them off changes them for the whole Mac. Restore them here before removing AppSwipe.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отключение меняет жесты для всего Mac. Верните их здесь, прежде чем удалять AppSwipe."
+          }
+        }
+      }
+    },
+    "When hidden, open AppSwipe again to see these settings, and press ⌘Q here to quit it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если значок скрыт, откройте AppSwipe ещё раз, чтобы увидеть эти настройки, а чтобы завершить его, нажмите здесь ⌘Q."
+          }
+        }
+      }
+    },
+    "Window": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Окно"
           }
         }
       }
@@ -481,12 +601,12 @@
         }
       }
     },
-    "Writes every trackpad touch to a log, for bug reports.": {
+    "Writes every trackpad touch to a log, for bug reports. The log keeps the last 10 MB.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Записывает каждое касание трекпада в лог, для отчётов об ошибках."
+            "value": "Записывает каждое касание трекпада в лог, для отчётов об ошибках. Лог хранит последние 10 МБ."
           }
         }
       }

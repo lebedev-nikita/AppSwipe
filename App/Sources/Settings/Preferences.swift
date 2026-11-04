@@ -53,12 +53,23 @@ final class Preferences {
             withMutation(keyPath: \.launchAtLogin) {
                 do {
                     if newValue { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
+                    launchAtLoginError = nil
                 } catch {
                     DiagnosticLog.write("cannot change launch at login: \(error.localizedDescription)")
+                    launchAtLoginError = error.localizedDescription
                 }
             }
         }
     }
+
+    /// Whether launch at login waits for the user to allow it under Login Items in System Settings.
+    var launchAtLoginNeedsApproval: Bool {
+        access(keyPath: \.launchAtLogin)
+        return SMAppService.mainApp.status == .requiresApproval
+    }
+
+    /// Why the last change to launch at login failed.
+    private(set) var launchAtLoginError: String?
 
     /// True only the first time AppSwipe launches.
     let isFirstLaunch: Bool

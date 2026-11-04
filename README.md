@@ -23,7 +23,7 @@ AppSwipe asks for two permissions:
 - **Accessibility**, to read swipes and switch apps and windows. Required.
 - **Screen Recording**, for window previews. Optional: without it the Window Switcher shows app icons. Takes effect after AppSwipe restarts.
 
-macOS uses the same three- and four-finger swipes to move between full-screen apps. Turn those off under Trackpad Gestures in AppSwipe's settings, which can restore them later.
+macOS uses the same three- and four-finger swipes to move between full-screen apps. Turn those off under Trackpad Gestures in AppSwipe's settings, which can restore them later. Restore them before uninstalling AppSwipe, since removing the app leaves them off.
 
 Update with:
 
@@ -38,7 +38,7 @@ brew upgrade --cask appswipe
 - Swipe with four fingers to step through the active app's windows on the current Space.
 - To cancel, move back to the first item and lift, or press Esc.
 
-Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. They can swap the finger counts, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
+Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. While they are open, ⌘W closes them and ⌘Q quits AppSwipe. They can pause AppSwipe, swap the finger counts, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
 
 ![Settings](docs/images/settings.png)
 

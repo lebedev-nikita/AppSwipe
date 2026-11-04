@@ -74,23 +74,28 @@ Constraints:
 
 AppSwipe is a menu bar agent with no Dock icon. Its menu bar icon offers Settings…, Pause, and Quit. The icon can be hidden, after which launching the app again opens Settings.
 
+While Settings is open, AppSwipe is a regular app with a Dock icon, a menu bar and a place in Command-Tab and the App Switcher, so the window can't get lost behind other apps. ⌘W closes the window and ⌘Q quits. Closing the window makes AppSwipe an agent again and returns the focus to the app that was in front.
+
 ### Settings
 
 Settings stay few on purpose. The opening travel, the Quick Switch window and the panel's look come from measurements and the native switcher, and a control for them could only make things worse.
 
-- Launch at login.
+- Launch at login. If macOS refuses or waits for approval under Login Items, Settings says so.
+- Pause, the same as in the menu, so AppSwipe can be resumed while the menu bar icon is hidden.
 - Show the menu bar icon.
 - Enable or disable each Switcher.
 - Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
-- Excluded apps. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
+- Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
 - Hide Finder from the App Switcher while it has no windows. On by default.
 - Live Switching, described below. Off by default.
-- Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews.
+- Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews; it takes effect after AppSwipe is quit and opened again. The status updates while Settings is open.
 - Gesture conflicts, described below.
-- Diagnostics: recording touches, and showing the logs, for bug reports.
+- Diagnostics: recording touches, and showing the logs, for bug reports. The touch log keeps the last 10 MB, in two files.
 
 Options for the Window Switcher, such as hiding minimized windows, wait until it exists. There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
+
+Permissions and gesture conflicts come first, so the first launch shows what AppSwipe still needs without scrolling. The window fits short screens and can be made taller.
 
 The first launch opens Settings.
 
@@ -102,7 +107,7 @@ AppSwipe detects these conflicting system settings:
 - three-finger swipe between pages;
 - three-finger drag.
 
-A "Turn off" button rewrites the trackpad preferences and applies them without a logout. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
+A "Turn off" button rewrites the trackpad preferences and applies them without a logout. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Removing AppSwipe does not restore them, so Settings asks to restore them first. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
 
 ### Language
 
