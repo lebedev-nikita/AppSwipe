@@ -82,7 +82,8 @@ final class GestureEventTap {
                     id: touchIDs.id(for: touch),
                     x: touch.normalizedPosition.x,
                     y: touch.normalizedPosition.y,
-                    phase: Touch.Phase(touch.phase))
+                    phase: Touch.Phase(touch.phase),
+                    isResting: touch.isResting)
             }
             .sorted { $0.id < $1.id })
         touchIDs.forgetLifted(touches)

@@ -27,4 +27,12 @@ import Testing
             surface: Size(width: 160, height: 100),
             touches: [Touch(id: 1, x: 0.25, y: 0.75, phase: .began)]))
     }
+
+    @Test func decodesARestingTouch() throws {
+        let line = #"{"id":1,"x":0.25,"y":0.1,"phase":"stationary","resting":true}"#
+
+        let touch = try JSONDecoder().decode(Touch.self, from: Data(line.utf8))
+
+        #expect(touch.isResting)
+    }
 }

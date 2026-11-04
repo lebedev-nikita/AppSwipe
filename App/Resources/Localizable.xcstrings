@@ -161,6 +161,16 @@
         }
       }
     },
+    "Ignore a palm on the trackpad": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не учитывать ладонь на трекпаде"
+          }
+        }
+      }
+    },
     "Instead of three, for example to keep three-finger drag.": {
       "localizations": {
         "ru": {
@@ -227,6 +237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет окон"
+          }
+        }
+      }
+    },
+    "Only fingers that move together count, so a resting palm doesn't block a swipe.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Считаются только пальцы, которые движутся вместе, поэтому лежащая ладонь не мешает свайпу."
           }
         }
       }

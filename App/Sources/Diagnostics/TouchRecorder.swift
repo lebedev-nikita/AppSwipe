@@ -58,6 +58,7 @@ final class TouchRecorder {
         guard var summary = gesture else { return }
         summary.frames += 1
         summary.maxFingers = max(summary.maxFingers, down.count)
+        summary.maxResting = max(summary.maxResting, down.filter(\.isResting).count)
         // Only movement between frames with the same fingers down counts as travel, so a finger
         // landing or lifting doesn't shift the centroid.
         if let previous, Set(previous.fingersDown.map(\.id)) == Set(down.map(\.id)), !down.isEmpty {
@@ -86,12 +87,13 @@ private struct GestureSummary {
     let surface: Size
     var frames = 0
     var maxFingers = 0
+    var maxResting = 0
     var dx = 0.0
     var dy = 0.0
 
     func line(end: Double) -> String {
         let duration = Int(((end - start) * 1000).rounded())
-        return "gesture: \(maxFingers) fingers, travel x \(mm(dx)) y \(mm(dy)) mm, \(duration) ms, "
+        return "gesture: \(maxFingers) fingers, \(maxResting) resting, travel x \(mm(dx)) y \(mm(dy)) mm, \(duration) ms, "
             + "\(frames) frames, surface \(mm(surface.width))×\(mm(surface.height)) mm"
     }
 
