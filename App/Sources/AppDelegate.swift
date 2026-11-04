@@ -170,7 +170,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Status item
 
     private func setUpStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = Self.statusIcon()
         let menu = NSMenu()
         menu.delegate = self
@@ -178,13 +178,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem = item
     }
 
-    /// The app icon's three items, as a template image.
+    /// The App Switcher's three items with the second, the previous app, selected. Uneven
+    /// opacity keeps three equal squares from reading as a "more" ellipsis.
     private static func statusIcon() -> NSImage {
-        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
-            NSColor.black.set()
-            let side: CGFloat = 5, gap: CGFloat = 1.25, radius: CGFloat = 1.3
-            for index in 0..<3 {
-                let rect = NSRect(x: 0.25 + CGFloat(index) * (side + gap), y: (18 - side) / 2, width: side, height: side)
+        let image = NSImage(size: NSSize(width: 22, height: 18), flipped: false) { _ in
+            let side: CGFloat = 6, gap: CGFloat = 1.5, radius: CGFloat = 1.6
+            for (index, alpha) in [0.4, 1, 0.4].enumerated() {
+                NSColor.black.withAlphaComponent(alpha).set()
+                let rect = NSRect(x: 1 + CGFloat(index) * (side + gap), y: (18 - side) / 2, width: side, height: side)
                 NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
             }
             return true
