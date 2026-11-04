@@ -9,9 +9,19 @@ import Observation
 @MainActor
 @Observable
 final class TrackpadConflicts {
+    /// The swipes the enabled Switchers use.
+    struct Swipes: Equatable {
+        /// Finger counts of horizontal swipes.
+        var sideways: Set<Int> = []
+        /// Finger count of the swipe down, if it opens a Switcher.
+        var down: Int?
+    }
+
     enum Conflict: Hashable {
         /// Horizontal swipes with this many fingers switch between full-screen apps and Spaces.
         case spacesSwipe(fingers: Int)
+        /// Swipes down with this many fingers show App Exposé.
+        case appExpose(fingers: Int)
         /// Three-finger horizontal swipes go back and forward in apps.
         case pageSwipe
         /// Three-finger drag, which only Accessibility settings can turn off.
@@ -19,6 +29,9 @@ final class TrackpadConflicts {
     }
 
     private static let domains = ["com.apple.AppleMultitouchTrackpad", "com.apple.driver.AppleBluetoothMultitouch.trackpad"]
+    /// App Exposé has its own switch in the Dock's domain; the finger count it shares with Mission Control.
+    private static let dock = "com.apple.dock"
+    private static let appExposeKey = "showAppExposeGestureEnabled"
     private static let savedKey = "SavedTrackpadGestures"
     private static let activateSettings = URL(
         fileURLWithPath: "/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings")
@@ -27,48 +40,57 @@ final class TrackpadConflicts {
     /// Whether "Restore" has original values to put back.
     private(set) var canRestore = UserDefaults.standard.dictionary(forKey: savedKey) != nil
 
-    /// Re-reads the trackpad settings for Switchers using `fingers`.
-    func refresh(fingers: Set<Int>) {
+    /// Re-reads the trackpad settings for Switchers using `swipes`.
+    func refresh(_ swipes: Swipes) {
         var found: [Conflict] = []
-        for count in fingers.sorted() where Self.value(Self.horizontalKey(count)) == 2 {
+        for count in swipes.sideways.sorted() where Self.value(Self.horizontalKey(count)) == 2 {
             found.append(.spacesSwipe(fingers: count))
         }
-        if fingers.contains(3) {
+        if let count = swipes.down, Self.value(Self.verticalKey(count)) == 2, Self.value(Self.appExposeKey) == 1 {
+            found.append(.appExpose(fingers: count))
+        }
+        if swipes.sideways.contains(3) {
             if Self.value(Self.horizontalKey(3)) == 1 { found.append(.pageSwipe) }
             if Self.value("TrackpadThreeFingerDrag") == 1 { found.append(.threeFingerDrag) }
         }
         conflicts = found
     }
 
-    /// Turns off the horizontal swipes the Switchers need, remembering the old values. Returns false
-    /// if macOS didn't take the change, in which case Trackpad settings should be opened instead.
+    /// Turns off the system swipes the Switchers need, remembering the old values. Returns false if
+    /// macOS didn't take the change, in which case Trackpad settings should be opened instead.
     @discardableResult
-    func turnOff(fingers: Set<Int>) -> Bool {
+    func turnOff(_ swipes: Swipes) -> Bool {
         var saved = UserDefaults.standard.dictionary(forKey: Self.savedKey) as? [String: Int] ?? [:]
-        for count in fingers {
-            let key = Self.horizontalKey(count)
+        // Turning off only App Exposé keeps Mission Control on the swipe up.
+        var keys = swipes.sideways.map(Self.horizontalKey)
+        if swipes.down != nil { keys.append(Self.appExposeKey) }
+        for key in keys {
             if saved[key] == nil { saved[key] = Self.value(key) ?? 0 }
             Self.write(key, 0)
         }
         UserDefaults.standard.set(saved, forKey: Self.savedKey)
         canRestore = true
         let applied = Self.apply()
-        refresh(fingers: fingers)
+        refresh(swipes)
         return applied && !conflicts.contains { if case .threeFingerDrag = $0 { false } else { true } }
     }
 
     /// Puts back the values `turnOff` replaced.
-    func restore(fingers: Set<Int>) {
+    func restore(_ swipes: Swipes) {
         guard let saved = UserDefaults.standard.dictionary(forKey: Self.savedKey) as? [String: Int] else { return }
         for (key, value) in saved { Self.write(key, value) }
         UserDefaults.standard.removeObject(forKey: Self.savedKey)
         canRestore = false
         Self.apply()
-        refresh(fingers: fingers)
+        refresh(swipes)
     }
 
     private static func horizontalKey(_ fingers: Int) -> String {
         fingers == 3 ? "TrackpadThreeFingerHorizSwipeGesture" : "TrackpadFourFingerHorizSwipeGesture"
+    }
+
+    private static func verticalKey(_ fingers: Int) -> String {
+        fingers == 3 ? "TrackpadThreeFingerVertSwipeGesture" : "TrackpadFourFingerVertSwipeGesture"
     }
 
     /// The per-host global key System Settings writes alongside each trackpad key.
@@ -81,10 +103,17 @@ final class TrackpadConflicts {
     }
 
     private static func value(_ key: String) -> Int? {
-        CFPreferencesCopyAppValue(key as CFString, domains[0] as CFString) as? Int
+        let value = CFPreferencesCopyAppValue(key as CFString, (key == appExposeKey ? dock : domains[0]) as CFString)
+        return (value as? Int) ?? (value as? Bool).map { $0 ? 1 : 0 }
     }
 
     private static func write(_ key: String, _ value: Int) {
+        if key == appExposeKey {
+            CFPreferencesSetValue(key as CFString, (value != 0) as CFBoolean, dock as CFString,
+                                  kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            CFPreferencesSynchronize(dock as CFString, kCFPreferencesCurrentUser, kCFPreferencesAnyHost)
+            return
+        }
         for domain in domains {
             CFPreferencesSetValue(key as CFString, value as CFNumber, domain as CFString,
                                   kCFPreferencesCurrentUser, kCFPreferencesAnyHost)

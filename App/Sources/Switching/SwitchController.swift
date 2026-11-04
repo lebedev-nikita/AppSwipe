@@ -36,7 +36,8 @@ final class SwitchController {
         }
     }
 
-    private struct Session {
+    /// One open Switcher and its Selection.
+    private struct Level {
         let targets: Targets
         let panel: SwitcherPanel
         var selection: SwitchSession
@@ -44,6 +45,24 @@ final class SwitchController {
         var passable: Set<Int>?
         /// The Item Live Switching last brought forward.
         var inFront = 0
+        /// The Selection moves by the travel past this.
+        var origin = 0.0
+    }
+
+    private struct Session {
+        /// The Switcher the swipe opened.
+        var root: Level
+        /// The windows of the app selected in the App Switcher, opened under it by a swipe down. While
+        /// they show, they have the Selection.
+        var windows: Level?
+        /// The travel of the latest move.
+        var travel = 0.0
+
+        /// The Level with the Selection.
+        var current: Level {
+            get { windows ?? root }
+            set { if windows != nil { windows = newValue } else { root = newValue } }
+        }
     }
 
     /// Rebuild app contents older than this when fingers land, in case something changed unnoticed,
@@ -145,16 +164,33 @@ final class SwitchController {
             }
             guard sessionsAllowed, let kind = preferences.switcher(forFingers: fingers) else { return }
             begin(kind, direction: direction, at: time)
+        case .beganDown(let fingers, let time):
+            guard !trial.isUnderPointer, preferences.swipeDownForWindows, sessionsAllowed,
+                  preferences.switcher(forFingers: fingers) == .apps
+            else { return }
+            begin(.apps, direction: nil, at: time)
+            openWindowsOfSelection()
         case .moved(let travel):
             if var trialSession {
                 if trialSession.move(travel: travel) { trial.selection = trialSession.selection }
                 self.trialSession = trialSession
                 return
             }
-            guard var session, session.selection.move(travel: travel) else { return }
-            session.panel.select(session.selection.selection)
-            bringForward(session.selection.selection, in: &session)
+            guard var session else { return }
+            session.travel = travel
+            var level = session.current
+            if level.selection.move(travel: travel - level.origin) {
+                level.panel.select(level.selection.selection)
+                bringForward(level.selection.selection, in: &level)
+            }
+            session.current = level
             self.session = session
+        case .swiped(let direction):
+            guard trialSession == nil else { return }
+            switch direction {
+            case .down: openWindowsOfSelection()
+            case .up: closeWindowsOfSelection()
+            }
         case .ended(let time):
             if trialSession != nil {
                 trialSession = nil
@@ -237,8 +273,8 @@ final class SwitchController {
         begin(kind, direction: .right, at: ProcessInfo.processInfo.systemUptime)
         inputTap.mode = .off
         guard let session else { return }
-        session.panel.select(selection)
-        logPanelFrame(session.panel)
+        session.root.panel.select(selection)
+        logPanelFrame(session.root.panel)
         Task {
             try? await Task.sleep(for: .seconds(6))
             finish()
@@ -462,7 +498,9 @@ final class SwitchController {
 
     // MARK: - Session
 
-    private func begin(_ kind: SwitcherKind, direction: Direction, at time: Double) {
+    /// Opens a Switcher. Without a `direction`, as for a swipe down, the Selection starts on the
+    /// Current Item.
+    private func begin(_ kind: SwitcherKind, direction: Direction?, at time: Double) {
         let eventAge = ProcessInfo.processInfo.systemUptime - time
         let started = clock.now
         let targets: Targets
@@ -481,8 +519,9 @@ final class SwitchController {
             targets = .windows(contents.app, contents.windows)
             panel = windowPanel
         }
-        let selection = SwitchSession(
-            itemCount: targets.count, direction: direction, began: time, settings: sessionSettings)
+        let selection = direction.map {
+            SwitchSession(itemCount: targets.count, direction: $0, began: time, settings: sessionSettings)
+        } ?? SwitchSession(onCurrentItemOf: targets.count, settings: sessionSettings)
         panel.select(selection.selection)
         panel.show()
         // Usually already frozen where the fingers landed.
@@ -490,13 +529,13 @@ final class SwitchController {
         cursor.hide()
         inputTap.mode = .session
         armedFingers = nil
-        var session = Session(targets: targets, panel: panel, selection: selection)
+        var level = Level(targets: targets, panel: panel, selection: selection)
         if preferences.liveSwitching {
-            session.passable = Self.passableItems(targets)
+            level.passable = Self.passableItems(targets)
             if case .apps = targets { appOrder.freeze() }
-            bringForward(selection.selection, in: &session)
+            bringForward(selection.selection, in: &level)
         }
-        self.session = session
+        session = Session(root: level)
         #if DEBUG
         DiagnosticLog.write(
             "timing: event age \(Self.milliseconds(eventAge)) ms, "
@@ -504,17 +543,53 @@ final class SwitchController {
         #endif
     }
 
+    /// Hands the Selection from the App Switcher to the selected app's windows, shown under it.
+    private func openWindowsOfSelection() {
+        guard var session, session.windows == nil, case .apps(let apps) = session.root.targets,
+              apps.indices.contains(session.root.selection.selection)
+        else { return }
+        let app = apps[session.root.selection.selection]
+        guard let contents = prepareWindows(of: app) else { return }
+        windowPanel.place(below: appPanel)
+        windowPanel.select(0)
+        windowPanel.show()
+        var level = Level(
+            targets: .windows(app, contents.windows), panel: windowPanel,
+            selection: SwitchSession(choosingAmong: contents.windows.count, settings: sessionSettings), inFront: -1,
+            origin: session.travel)
+        if session.root.passable != nil {
+            // Like the App Switcher, Live Switching leaves hidden apps hidden.
+            level.passable = app.isHidden ? [] : Self.passableItems(level.targets)
+            bringForward(0, in: &level)
+        }
+        session.windows = level
+        self.session = session
+        #if DEBUG
+        DiagnosticLog.write("opened \(contents.windows.count) windows of \(app.localizedName ?? "?") from the apps")
+        #endif
+    }
+
+    /// Hands the Selection back to the App Switcher, where it was.
+    private func closeWindowsOfSelection() {
+        guard var session, let windows = session.windows else { return }
+        windows.panel.hide()
+        // Travel among the windows doesn't move the app Selection.
+        session.root.origin += session.travel - windows.origin
+        session.windows = nil
+        self.session = session
+    }
+
     /// Live Switching: brings the selected Item forward, if it may be while passing over it.
-    private func bringForward(_ item: Int, in session: inout Session) {
-        guard let passable = session.passable, item != session.inFront, passable.contains(item) else { return }
-        switch session.targets {
+    private func bringForward(_ item: Int, in level: inout Level) {
+        guard let passable = level.passable, item != level.inFront, passable.contains(item) else { return }
+        switch level.targets {
         case .apps(let apps):
             AppActivator.bringForward(apps[item])
         case .windows(let app, let windows):
             WindowActivator.raise(windows[item], of: app)
         }
         cursor.reassertHidden()
-        session.inFront = item
+        level.inFront = item
     }
 
     /// Items Live Switching brings forward while passing over them. The Active App always comes back.
@@ -551,12 +626,25 @@ final class SwitchController {
 
     private func end(at time: Double) {
         guard let session = finish() else { return }
-        switch session.selection.outcome(endedAt: time) {
+        if let level = session.windows, case .windows(let app, let windows) = level.targets {
+            switch level.selection.outcome(endedAt: time) {
+            case .activate(let item):
+                if app.isHidden { app.unhide() }
+                WindowActivator.focus(windows[item], of: app)
+            case .cancel:
+                // No windows to choose from: switch to the app as a Dock click does.
+                AppActivator.activate(app)
+            }
+            if session.root.passable != nil { appOrder.unfreeze(final: app.processIdentifier) }
+            return
+        }
+        let root = session.root
+        switch root.selection.outcome(endedAt: time) {
         case .activate(let item):
-            switch session.targets {
+            switch root.targets {
             case .apps(let apps):
                 AppActivator.activate(apps[item])
-                if session.passable != nil { appOrder.unfreeze(final: apps[item].processIdentifier) }
+                if root.passable != nil { appOrder.unfreeze(final: apps[item].processIdentifier) }
             case .windows(let app, let windows):
                 WindowActivator.focus(windows[item], of: app)
             }
@@ -572,15 +660,20 @@ final class SwitchController {
 
     /// After Live Switching is cancelled, brings back the Active App or its window.
     private func restore(after session: Session) {
-        guard session.passable != nil else { return }
-        switch session.targets {
+        guard session.root.passable != nil else { return }
+        switch session.root.targets {
         case .apps(let apps):
-            if session.inFront != 0, let active = apps.first { AppActivator.bringForward(active) }
+            if let level = session.windows, case .windows(let app, let windows) = level.targets, app == apps.first {
+                // Among the Active App's own windows, as in the Window Switcher.
+                if level.inFront > 0, let current = windows.first { WindowActivator.raise(current, of: app) }
+            } else if session.root.inFront != 0 || session.windows != nil, let active = apps.first {
+                AppActivator.bringForward(active)
+            }
             appOrder.unfreeze(final: nil)
         case .windows(let app, let windows):
             // Windows passed over stay raised: Accessibility can only raise a window to the top, so
             // putting them back would flash them over the window switched to.
-            if session.inFront != 0, let current = windows.first { WindowActivator.raise(current, of: app) }
+            if session.root.inFront != 0, let current = windows.first { WindowActivator.raise(current, of: app) }
         }
     }
 
@@ -588,7 +681,8 @@ final class SwitchController {
     private func finish() -> Session? {
         guard let session else { return nil }
         self.session = nil
-        session.panel.hide()
+        session.root.panel.hide()
+        session.windows?.panel.hide()
         cursor.release()
         inputTap.mode = .off
         // The app list may have changed while the panel was showing.

@@ -46,6 +46,24 @@ import Testing
         #expect(trackpad.move(dx: 8) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
     }
 
+    @Test func threeFingersMovingDownOpenASession() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+
+        #expect(trackpad.move(dx: 1, dy: -2) == [])
+        #expect(trackpad.move(dx: 0, dy: -1.5) == [.beganDown(fingers: 3, time: trackpad.time)])
+        #expect(trackpad.move(dx: 8).count == 1)
+        #expect(trackpad.lift(1) == [.ended(time: trackpad.time)])
+    }
+
+    @Test func aMostlyDownwardDiagonalSwipeDoesNotOpen() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+
+        #expect(trackpad.move(dx: 2.5, dy: -4) == [])
+        #expect(trackpad.move(dx: 0, dy: -10) == [])
+    }
+
     @Test func aDiagonalSwipeDoesNotOpen() {
         var trackpad = Trackpad()
         trackpad.land(3)
@@ -94,6 +112,48 @@ import Testing
         #expect(trackpad.lift(2) == [])
     }
 
+    @Test func movingDownDuringASessionSwipesDownOnce() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.move(dx: 7)
+
+        #expect(trackpad.move(dx: 0, dy: -4) == [])
+        #expect(trackpad.move(dx: 0, dy: -3) == [.swiped(.down)])
+        #expect(trackpad.move(dx: 0, dy: -3) == [])
+        #expect(trackpad.move(dx: 0, dy: 10) == [.swiped(.up)])
+    }
+
+    @Test func sidewaysWobbleDuringAStrokeStillCountsAsTravel() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.move(dx: 7)
+
+        let events = trackpad.move(dx: 1, dy: -4)
+        #expect(events.count == 1)
+        guard case .moved(let travel) = events.first else { Issue.record("expected .moved"); return }
+        #expect(abs(travel - 1) < 0.001)
+        #expect(trackpad.move(dx: 1, dy: -3) == [.swiped(.down)])
+    }
+
+    @Test func driftWhileSteppingSidewaysDoesNotSwipe() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.move(dx: 7)
+
+        for _ in 0..<10 {
+            let events = trackpad.move(dx: 4, dy: -1.5)
+            #expect(!events.contains(.swiped(.down)))
+        }
+    }
+
+    @Test func aDiagonalMoveDuringASessionDoesNotSwipe() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.move(dx: 7)
+
+        #expect(!trackpad.move(dx: 6, dy: -8).contains(.swiped(.down)))
+    }
+
     @Test func recordedSwipesSplitIntoDeliberateSwipesAndQuickSwitches() throws {
         let url = try #require(Bundle.module.url(forResource: "three-finger-swipes", withExtension: "jsonl",
                                                  subdirectory: "Fixtures"))
@@ -103,6 +163,7 @@ import Testing
 
         var recognizer = SwipeRecognizer()
         var sessions: [(direction: Direction, began: Double, travel: Double, ended: Double)] = []
+        var strokes = 0
         for event in frames.compactMap({ recognizer.handle($0) }) {
             switch event {
             case .began(let fingers, let direction, let time):
@@ -112,6 +173,8 @@ import Testing
                 sessions[sessions.count - 1].travel = travel
             case .ended(let time):
                 sessions[sessions.count - 1].ended = time
+            case .swiped, .beganDown:
+                strokes += 1
             case .armed:
                 break
             }
@@ -124,6 +187,8 @@ import Testing
         #expect(deliberate.allSatisfy { abs($0.travel) > 60 })
         #expect(quick.count == 7)
         #expect(quick.allSatisfy { abs($0.travel) < 45 })
+        // Sideways swipes never stroke up or down.
+        #expect(strokes == 0)
     }
 }
 

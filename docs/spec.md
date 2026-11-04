@@ -50,6 +50,17 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 6. The cursor stays still from the moment the fingers land, and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was. Clicks and Force Clicks during a session don't reach the app under the cursor.
 7. The Switcher appears the moment the session opens. Lifting the fingers within about 200 ms of that is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 62–133 ms from opening to lift, while deliberate swipes took 480–660 ms.
 
+### Windows of the selected app
+
+In the App Switcher, moving the fingers down without lifting them opens the Window Switcher for the selected app, under the App Switcher, which stays open. The Selection moves to the app's windows, starting on the first of them, and sideways travel steps through them. Moving the fingers up hides them and gives the Selection back to the App Switcher, on the same app.
+
+- A stroke counts once the fingers travel 6 mm up or down and at least twice as far as sideways, counting from when they last moved sideways. Drift while stepping through Items doesn't add up to a stroke.
+- The windows are those the Window Switcher would list for that app, from the same displays.
+- Commit focuses the selected window and activates its app, unhiding it if hidden. With no windows, Commit switches to the app as the App Switcher does.
+- Every window Commits, the first one too, and there is no Quick Switch. To Cancel, move up and lift on the Current Item, or press Esc.
+- With Live Switching, the first window comes forward as the windows open, and then each window the Selection lands on. A hidden app stays hidden until Commit.
+- A setting, off by default, opens this straight away, in place of App Exposé: swiping down with the App Switcher's fingers opens the App Switcher on the Active App with its windows below. Moving up gives the Selection to the Active App, where lifting Cancels.
+
 ### Live Switching
 
 With **Live Switching** on, there is no waiting for the fingers to lift: the selected Item is activated the moment the Selection lands on it, starting with the second Item when the session opens. It works the same in both Switchers.
@@ -66,7 +77,7 @@ With **Live Switching** on, there is no waiting for the fingers to lift: the sel
 
 Constraints:
 
-- v1 has no other actions during a session: no quit, hide, or close, and no opening an app's windows from the App Switcher. Vertical finger movement is reserved for such actions later.
+- v1 has no other actions during a session: no quit, hide, or close. Vertical finger movement only opens and hides the selected app's windows.
 - A session does not start while Mission Control or App Exposé is open, while the screen is locked, while AppSwipe is paused, or while an excluded app is frontmost.
 - Keyboard Cmd-Tab and Cmd-` are left to the system. AppSwipe only listens to Esc, and only during a session.
 
@@ -88,6 +99,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Enable or disable each Switcher.
 - For each Switcher, list Items from all displays or only from the display with the pointer. All displays by default.
 - Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
+- Swipe down for the Active App's windows, in place of App Exposé. Off by default.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
 - Hide Finder from the App Switcher while it has no windows. On by default.
@@ -108,9 +120,10 @@ AppSwipe detects these conflicting system settings:
 
 - three- or four-finger swipes between full-screen apps and Spaces;
 - three-finger swipe between pages;
+- App Exposé on the swipe down, while the swipe down opens the Active App's windows;
 - three-finger drag.
 
-A "Turn off" button rewrites the trackpad preferences and applies them without a logout. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Removing AppSwipe does not restore them, so Settings asks to restore them first. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
+A "Turn off" button rewrites the trackpad preferences and applies them without a logout. For App Exposé it turns off only App Exposé, which keeps Mission Control on the swipe up. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Removing AppSwipe does not restore them, so Settings asks to restore them first. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
 
 ### Language
 
