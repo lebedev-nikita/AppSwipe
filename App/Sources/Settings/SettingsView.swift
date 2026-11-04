@@ -42,7 +42,7 @@ struct SettingsView: View {
                 if current != permissions { permissions = current }
             }
         }
-        .onChange(of: swipes) { conflicts.refresh(swipes) }
+        .onChange(of: preferences.fingers) { conflicts.refresh(fingers: preferences.fingers) }
     }
 
     private var permissionsSection: some View {
@@ -65,7 +65,19 @@ struct SettingsView: View {
         }
     }
 
-    private var gesturesSection: some View {
+    /// What the swipes do, then the macOS gestures that take them.
+    @ViewBuilder private var gesturesSection: some View {
+        let fingers = preferences.fingers
+        Section("Trackpad Gestures") {
+            GestureRow(
+                symbol: "arrow.left.and.right",
+                title: fingers == 3 ? "Swipe sideways with three fingers" : "Swipe sideways with four fingers",
+                detail: "Steps through apps, most recently used first. A quick flick switches to the previous app.")
+            GestureRow(
+                symbol: "arrow.down",
+                title: fingers == 3 ? "Swipe down with three fingers" : "Swipe down with four fingers",
+                detail: "Steps through the windows of the app in front. While switching apps, shows the selected app’s windows; swipe up to go back.")
+        }
         Section {
             if conflicts.conflicts.isEmpty {
                 Label("No trackpad gestures conflict with AppSwipe.", systemImage: "checkmark.circle")
@@ -81,8 +93,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) { gestureButtons }
                 }
             }
-        } header: {
-            Text("Trackpad Gestures")
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
                 Text("macOS gestures that use the same swipes take them before AppSwipe can.")
@@ -97,7 +107,7 @@ struct SettingsView: View {
         if canTurnOffConflicts { Button("Turn Off Conflicting Gestures", action: turnOffConflicts) }
         if hasThreeFingerDrag { Button("Open Accessibility Settings", action: Self.openPointerSettings) }
         if conflicts.canRestore {
-            Button("Restore Original Gestures") { conflicts.restore(swipes) }
+            Button("Restore Original Gestures") { conflicts.restore(fingers: preferences.fingers) }
         }
     }
 
@@ -126,39 +136,23 @@ struct SettingsView: View {
     }
 
     private var switchersSection: some View {
-        Section("Switchers") {
-            Toggle(isOn: $preferences.appSwitcherEnabled) {
-                Text("App Switcher")
-                Text(fingersDescription(preferences.fingers(for: .apps)))
+        Section {
+            Toggle(isOn: $preferences.fourFingers) {
+                Text("Swipe with four fingers")
+                Text("Instead of three, for example to keep three-finger drag.")
             }
             Picker(selection: $preferences.appDisplays) { displayOptions } label: {
                 Text("Show apps from")
                 Text("From one display, the App Switcher lists the app in front and the apps with a window there.")
             }
-            .disabled(!preferences.appSwitcherEnabled)
-            Toggle(isOn: $preferences.swipeDownForWindows) {
-                Text("Swipe down for windows")
-                Text(swipeDownDescription(preferences.fingers(for: .apps)))
-            }
-            .disabled(!preferences.appSwitcherEnabled)
-            Toggle(isOn: $preferences.windowSwitcherEnabled) {
-                Text("Window Switcher")
-                Text(fingersDescription(preferences.fingers(for: .windows)))
-            }
             Picker("Show windows from", selection: $preferences.windowDisplays) { displayOptions }
-                .disabled(!preferences.windowSwitcherEnabled)
-            if !preferences.appSwitcherEnabled && !preferences.windowSwitcherEnabled {
-                Label("Both Switchers are off, so swipes do nothing.", systemImage: "exclamationmark.triangle")
-            }
-            Toggle(isOn: $preferences.swapFingerCounts) {
-                Text("Swap finger counts")
-                Text("Four fingers for apps, three for windows.")
-            }
             Toggle(isOn: $preferences.liveSwitching) {
                 Text("Live Switching")
                 Text("Switch the moment the selection moves, without waiting for the fingers to lift.")
             }
             Toggle("Hide Finder when it has no windows", isOn: $preferences.hideFinderWithoutWindows)
+        } header: {
+            Text("Switchers")
         }
     }
 
@@ -237,34 +231,13 @@ struct SettingsView: View {
         }
     }
 
-    /// The swipes of the enabled Switchers.
-    private var swipes: TrackpadConflicts.Swipes {
-        var swipes = TrackpadConflicts.Swipes()
-        if preferences.appSwitcherEnabled {
-            swipes.sideways.insert(preferences.fingers(for: .apps))
-            if preferences.swipeDownForWindows { swipes.down = preferences.fingers(for: .apps) }
-        }
-        if preferences.windowSwitcherEnabled { swipes.sideways.insert(preferences.fingers(for: .windows)) }
-        return swipes
-    }
-
     private var canTurnOffConflicts: Bool { conflicts.conflicts.contains { $0 != .threeFingerDrag } }
     private var hasThreeFingerDrag: Bool { conflicts.conflicts.contains(.threeFingerDrag) }
 
     private func refresh() {
         permissions = PermissionState()
         runningApps = RunningApp.all()
-        conflicts.refresh(swipes)
-    }
-
-    private func fingersDescription(_ fingers: Int) -> LocalizedStringKey {
-        fingers == 3 ? "Swipe sideways with three fingers." : "Swipe sideways with four fingers."
-    }
-
-    private func swipeDownDescription(_ fingers: Int) -> LocalizedStringKey {
-        fingers == 3
-            ? "Swiping down with three fingers shows the windows of the app in front, instead of App Exposé."
-            : "Swiping down with four fingers shows the windows of the app in front, instead of App Exposé."
+        conflicts.refresh(fingers: preferences.fingers)
     }
 
     private func description(of conflict: TrackpadConflicts.Conflict) -> LocalizedStringKey {
@@ -280,12 +253,12 @@ struct SettingsView: View {
         case .pageSwipe:
             "Swiping with three fingers goes back and forward between pages."
         case .threeFingerDrag:
-            "Three-finger drag is on. Turn it off in Accessibility settings, or swap finger counts and turn off the three-finger Switcher."
+            "Three-finger drag is on. Turn it off in Accessibility settings, or swipe with four fingers."
         }
     }
 
     private func turnOffConflicts() {
-        if !conflicts.turnOff(swipes) {
+        if !conflicts.turnOff(fingers: preferences.fingers) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Trackpad-Settings.extension")!)
         }
     }
@@ -332,6 +305,24 @@ private struct RunningApp: Identifiable {
                 return RunningApp(bundleID: id, name: app.localizedName ?? id, icon: icon)
             }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+    }
+}
+
+/// One swipe and what it does.
+private struct GestureRow: View {
+    let symbol: String
+    let title: LocalizedStringKey
+    let detail: LocalizedStringKey
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                Text(detail).font(.subheadline).foregroundStyle(.secondary)
+            }
+        } icon: {
+            Image(systemName: symbol).foregroundStyle(.tint)
+        }
     }
 }
 

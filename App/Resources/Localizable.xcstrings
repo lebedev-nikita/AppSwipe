@@ -51,32 +51,12 @@
         }
       }
     },
-    "App Switcher": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Переключатель приложений"
-          }
-        }
-      }
-    },
     "AppSwipe Settings": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Настройки AppSwipe"
-          }
-        }
-      }
-    },
-    "Both Switchers are off, so swipes do nothing.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Оба переключателя выключены, поэтому свайпы ничего не делают."
           }
         }
       }
@@ -131,16 +111,6 @@
         }
       }
     },
-    "Four fingers for apps, three for windows.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Четыре пальца для приложений, три для окон."
-          }
-        }
-      }
-    },
     "From one display, the App Switcher lists the app in front and the apps with a window there.": {
       "localizations": {
         "ru": {
@@ -187,6 +157,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сколько должны пройти пальцы, чтобы выделение сдвинулось на один элемент."
+          }
+        }
+      }
+    },
+    "Instead of three, for example to keep three-finger drag.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вместо трёх, например чтобы оставить перетаскивание тремя пальцами."
           }
         }
       }
@@ -461,22 +441,42 @@
         }
       }
     },
-    "Swap finger counts": {
+    "Steps through apps, most recently used first. A quick flick switches to the previous app.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Поменять местами число пальцев"
+            "value": "Листает приложения, начиная с недавних. Быстрый взмах переключает на предыдущее приложение."
           }
         }
       }
     },
-    "Swipe down for windows": {
+    "Steps through the windows of the app in front. While switching apps, shows the selected app’s windows; swipe up to go back.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Свайп вниз для окон"
+            "value": "Листает окна текущего приложения. Во время переключения приложений показывает окна выбранного, а свайп вверх возвращает к приложениям."
+          }
+        }
+      }
+    },
+    "Swipe down with four fingers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп четырьмя пальцами вниз"
+          }
+        }
+      }
+    },
+    "Swipe down with three fingers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп тремя пальцами вниз"
           }
         }
       }
@@ -491,22 +491,32 @@
         }
       }
     },
-    "Swipe sideways with four fingers.": {
+    "Swipe sideways with four fingers": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Свайп в сторону четырьмя пальцами."
+            "value": "Свайп четырьмя пальцами вбок"
           }
         }
       }
     },
-    "Swipe sideways with three fingers.": {
+    "Swipe sideways with three fingers": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Свайп в сторону тремя пальцами."
+            "value": "Свайп тремя пальцами вбок"
+          }
+        }
+      }
+    },
+    "Swipe with four fingers": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп четырьмя пальцами"
           }
         }
       }
@@ -541,32 +551,12 @@
         }
       }
     },
-    "Swiping down with four fingers shows the windows of the app in front, instead of App Exposé.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Свайп четырьмя пальцами вниз показывает окна приложения на переднем плане вместо App Exposé."
-          }
-        }
-      }
-    },
     "Swiping down with three fingers shows App Exposé.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Свайп тремя пальцами вниз показывает App Exposé."
-          }
-        }
-      }
-    },
-    "Swiping down with three fingers shows the windows of the app in front, instead of App Exposé.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Свайп тремя пальцами вниз показывает окна приложения на переднем плане вместо App Exposé."
           }
         }
       }
@@ -621,12 +611,12 @@
         }
       }
     },
-    "Three-finger drag is on. Turn it off in Accessibility settings, or swap finger counts and turn off the three-finger Switcher.": {
+    "Three-finger drag is on. Turn it off in Accessibility settings, or swipe with four fingers.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Включено перетаскивание тремя пальцами. Отключите его в настройках Универсального доступа или поменяйте число пальцев местами и отключите переключатель на трёх пальцах."
+            "value": "Включено перетаскивание тремя пальцами. Отключите его в настройках Универсального доступа или включите свайп четырьмя пальцами."
           }
         }
       }
@@ -687,16 +677,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Окно"
-          }
-        }
-      }
-    },
-    "Window Switcher": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Переключатель окон"
           }
         }
       }

@@ -1,16 +1,3 @@
-/// Which Switcher a swipe opens.
-public enum SwitcherKind: Sendable {
-    case apps, windows
-
-    public init?(fingers: Int) {
-        switch fingers {
-        case 3: self = .apps
-        case 4: self = .windows
-        default: return nil
-        }
-    }
-}
-
 /// The Selection of one Switch Session, moved by finger travel.
 public struct SwitchSession: Sendable {
     public struct Settings: Sendable {
