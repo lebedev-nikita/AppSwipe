@@ -30,8 +30,6 @@ final class SwitcherPanel {
         static let bottomPadding: CGFloat = 10
         /// Between a Switcher and the one shown under it.
         static let stackGap: CGFloat = 12
-        /// The panel widens until titles get this much room, about 30 characters; longer ones are cut short.
-        static let minTitleWidth: CGFloat = 240
 
         private static let insetRatio: CGFloat = 0.074
         private static let gapRatio: CGFloat = 0.142
@@ -56,6 +54,10 @@ final class SwitcherPanel {
         func panelCornerRadius(windows: Bool) -> CGFloat {
             (windows ? previewCornerRadius : iconCornerRadius) + inset + padding
         }
+
+        /// The panel widens until titles get as much room as the widest possible window preview; longer
+        /// ones are cut short.
+        var minTitleWidth: CGFloat { contentWidth(aspect: Self.aspects.upperBound) }
 
         func contentWidth(aspect: CGFloat?) -> CGFloat {
             guard let aspect else { return size }
@@ -160,7 +162,7 @@ final class SwitcherPanel {
         // Titles stay within the rounded edges. The panel widens for the longest one, up to the minimum
         // room, so its width doesn't change as the Selection moves.
         let longestTitle = items.map { titleWidth(of: $0.title) }.max() ?? 0
-        let titleRoom = min(longestTitle, Metrics.minTitleWidth) + 2 * (metrics.padding + metrics.inset)
+        let titleRoom = min(longestTitle, metrics.minTitleWidth) + 2 * (metrics.padding + metrics.inset)
         let width = min(max(visibleRowWidth + 2 * edge, titleRoom), maxWidth)
         let size = NSSize(width: width, height: metrics.padding + height + bottom)
         scrollView.frame = NSRect(
