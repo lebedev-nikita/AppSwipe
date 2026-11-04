@@ -13,6 +13,8 @@ final class Preferences {
         static let showMenuBarIcon = "ShowMenuBarIcon"
         static let appSwitcherEnabled = "AppSwitcherEnabled"
         static let windowSwitcherEnabled = "WindowSwitcherEnabled"
+        static let appDisplays = "AppSwitcherDisplays"
+        static let windowDisplays = "WindowSwitcherDisplays"
         static let swapFingerCounts = "SwapFingerCounts"
         static let stepLength = "StepLength"
         static let excludedApps = "ExcludedApps"
@@ -30,6 +32,10 @@ final class Preferences {
     var showMenuBarIcon: Bool { didSet { defaults.set(showMenuBarIcon, forKey: Key.showMenuBarIcon) } }
     var appSwitcherEnabled: Bool { didSet { defaults.set(appSwitcherEnabled, forKey: Key.appSwitcherEnabled) } }
     var windowSwitcherEnabled: Bool { didSet { defaults.set(windowSwitcherEnabled, forKey: Key.windowSwitcherEnabled) } }
+    /// The displays whose apps the App Switcher lists.
+    var appDisplays: DisplayScope { didSet { defaults.set(appDisplays.rawValue, forKey: Key.appDisplays) } }
+    /// The displays whose windows the Window Switcher lists.
+    var windowDisplays: DisplayScope { didSet { defaults.set(windowDisplays.rawValue, forKey: Key.windowDisplays) } }
     /// Four fingers for the App Switcher and three for the Window Switcher.
     var swapFingerCounts: Bool { didSet { defaults.set(swapFingerCounts, forKey: Key.swapFingerCounts) } }
     /// Finger travel per Step, in millimetres.
@@ -85,6 +91,8 @@ final class Preferences {
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
         appSwitcherEnabled = defaults.bool(forKey: Key.appSwitcherEnabled)
         windowSwitcherEnabled = defaults.bool(forKey: Key.windowSwitcherEnabled)
+        appDisplays = defaults.string(forKey: Key.appDisplays).flatMap(DisplayScope.init) ?? .all
+        windowDisplays = defaults.string(forKey: Key.windowDisplays).flatMap(DisplayScope.init) ?? .all
         swapFingerCounts = defaults.bool(forKey: Key.swapFingerCounts)
         stepLength = defaults.double(forKey: Key.stepLength)
         excludedApps = defaults.stringArray(forKey: Key.excludedApps) ?? []

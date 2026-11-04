@@ -31,6 +31,16 @@
         }
       }
     },
+    "All displays": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Со всех дисплеев"
+          }
+        }
+      }
+    },
     "Allow AppSwipe under Login Items in System Settings.": {
       "localizations": {
         "ru": {
@@ -101,6 +111,16 @@
         }
       }
     },
+    "Display with the pointer": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С дисплея с указателем"
+          }
+        }
+      }
+    },
     "Excluded Apps": {
       "localizations": {
         "ru": {
@@ -117,6 +137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Четыре пальца для приложений, три для окон."
+          }
+        }
+      }
+    },
+    "From one display, the App Switcher lists the app in front and the apps with a window there.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "С одного дисплея переключатель показывает приложение на переднем плане и приложения, у которых там есть окно."
           }
         }
       }
@@ -381,12 +411,32 @@
         }
       }
     },
+    "Show apps from": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать приложения"
+          }
+        }
+      }
+    },
     "Show icon in the menu bar": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Показывать значок в строке меню"
+          }
+        }
+      }
+    },
+    "Show windows from": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать окна"
           }
         }
       }
