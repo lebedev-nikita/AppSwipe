@@ -1,4 +1,4 @@
-<img src="assets/icon.png" width="96" height="96" alt="">
+<img src="assets/app-icon.png" width="96" height="96" alt="">
 
 # AppSwipe
 
