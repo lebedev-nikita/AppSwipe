@@ -28,6 +28,8 @@ final class SwitcherPanel {
         static let titleBaseline: CGFloat = 17
         /// From the title's baseline to the bottom of the panel.
         static let bottomPadding: CGFloat = 10
+        /// Between a Switcher and the one shown under it.
+        static let stackGap: CGFloat = 12
 
         private static let insetRatio: CGFloat = 0.074
         private static let gapRatio: CGFloat = 0.142
@@ -209,6 +211,13 @@ final class SwitcherPanel {
         let baseline = Metrics.bottomPadding
         let y = baseline - (size.height - titleField.firstBaselineOffsetFromTop)
         titleField.frame = NSRect(x: x, y: y, width: width, height: size.height).integral
+    }
+
+    /// Moves the panel under `other`, or as far down as the display allows.
+    func place(below other: SwitcherPanel) {
+        var frame = panel.frame
+        frame.origin.y = max(other.frame.minY - Metrics.stackGap - frame.height, Displays.withPointer.visibleFrame.minY)
+        panel.setFrame(frame.integral, display: false)
     }
 
     func show() {

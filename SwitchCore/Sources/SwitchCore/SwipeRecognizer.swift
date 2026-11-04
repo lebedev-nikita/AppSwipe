@@ -3,6 +3,11 @@ public enum Direction: Sendable {
     case left, right
 }
 
+/// Vertical direction of finger travel.
+public enum VerticalDirection: Sendable {
+    case up, down
+}
+
 /// What `SwipeRecognizer` reports about the swipe that drives a Switch Session.
 public enum SwipeEvent: Equatable, Sendable {
     /// A number of fingers that can open a Switcher has landed, so a session may follow. Reported
@@ -10,8 +15,13 @@ public enum SwipeEvent: Equatable, Sendable {
     case armed(fingers: Int)
     /// Enough fingers travelled far enough sideways to open a Switcher.
     case began(fingers: Int, direction: Direction, time: Double)
+    /// Enough fingers travelled far enough down to open a Switcher. Moving up never opens one.
+    case beganDown(fingers: Int, time: Double)
     /// Horizontal travel since `began`, in millimetres. Positive is to the right.
     case moved(travel: Double)
+    /// During a session, the fingers moved up or down far enough, and more up or down than sideways.
+    /// Reported once per stroke; sideways travel during it still counts towards `moved`.
+    case swiped(VerticalDirection)
     /// One of the swiping fingers lifted, which ends the Switch Session.
     case ended(time: Double)
 }
@@ -25,6 +35,8 @@ public struct SwipeRecognizer: Sendable {
         public var openingTravel = 3.0
         /// How many times farther the fingers must travel sideways than vertically.
         public var horizontalBias = 2.0
+        /// Vertical travel during a session that makes a stroke up or down, in millimetres.
+        public var strokeTravel = 6.0
 
         public init() {}
     }
@@ -36,8 +48,8 @@ public struct SwipeRecognizer: Sendable {
         case tracking(fingers: Set<Int>, travel: Vector)
         /// The touch isn't a Switch Session; ignore it until every finger lifts.
         case ignoring
-        /// A Switch Session is open.
-        case swiping(fingers: Set<Int>, travel: Double)
+        /// A Switch Session is open. `stroke` counts from the moment the fingers last moved sideways.
+        case swiping(fingers: Set<Int>, travel: Double, stroke: Vector)
     }
 
     private struct Vector {
@@ -72,12 +84,16 @@ public struct SwipeRecognizer: Sendable {
             travel.x += delta.x
             travel.y += delta.y
             if abs(travel.x) >= settings.openingTravel, abs(travel.x) >= settings.horizontalBias * abs(travel.y) {
-                state = .swiping(fingers: ids, travel: 0)
+                state = .swiping(fingers: ids, travel: 0, stroke: Vector())
                 return .began(fingers: ids.count, direction: travel.x > 0 ? .right : .left, time: frame.time)
             }
             if abs(travel.y) >= settings.openingTravel, abs(travel.y) > abs(travel.x) {
-                state = .ignoring
-                return nil
+                guard travel.y < 0, abs(travel.y) >= settings.horizontalBias * abs(travel.x) else {
+                    state = .ignoring
+                    return nil
+                }
+                state = .swiping(fingers: ids, travel: 0, stroke: Vector())
+                return .beganDown(fingers: ids.count, time: frame.time)
             }
             state = .tracking(fingers: ids, travel: travel)
             return nil
@@ -86,17 +102,27 @@ public struct SwipeRecognizer: Sendable {
             if ids.isEmpty { state = .idle }
             return nil
 
-        case .swiping(let fingers, var travel):
+        case .swiping(let fingers, var travel, var stroke):
             guard fingers.isSubset(of: ids) else {
                 state = ids.isEmpty ? .idle : .ignoring
                 return .ended(time: frame.time)
             }
             // Only the fingers that opened the session count, so a finger landing later doesn't move it.
-            let delta = movement(of: fingers, to: down, surface: frame.surface).x
-            guard delta != 0 else { return nil }
-            travel += delta
-            state = .swiping(fingers: fingers, travel: travel)
-            return .moved(travel: travel)
+            let delta = movement(of: fingers, to: down, surface: frame.surface)
+            guard delta.x != 0 || delta.y != 0 else { return nil }
+            travel += delta.x
+            stroke.x += delta.x
+            stroke.y += delta.y
+            defer { state = .swiping(fingers: fingers, travel: travel, stroke: stroke) }
+            if abs(stroke.y) >= settings.strokeTravel, abs(stroke.y) >= settings.horizontalBias * abs(stroke.x) {
+                let direction: VerticalDirection = stroke.y > 0 ? .up : .down
+                stroke = Vector()
+                return .swiped(direction)
+            }
+            // Moving sideways starts the next stroke afresh, so drift while stepping through Items adds
+            // up to none.
+            if abs(stroke.x) >= settings.openingTravel, abs(stroke.x) >= abs(stroke.y) { stroke = Vector() }
+            return delta.x != 0 ? .moved(travel: travel) : nil
         }
     }
 

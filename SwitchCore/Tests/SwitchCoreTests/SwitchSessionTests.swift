@@ -105,4 +105,35 @@ import Testing
 
         #expect(session.outcome(endedAt: 10.15) == .activate(item: 1))
     }
+
+    @Test func choosingStartsOnTheFirstItemAndActivatesIt() {
+        let session = SwitchSession(choosingAmong: 3)
+
+        #expect(session.selection == 0)
+        #expect(session.outcome(endedAt: 0) == .activate(item: 0))
+    }
+
+    @Test func choosingMovesAndActivatesTheSelection() {
+        var session = SwitchSession(choosingAmong: 3)
+        session.move(travel: 7)
+        #expect(session.selection == 1)
+        session.move(travel: -20)
+        #expect(session.selection == 0)
+        session.move(travel: 30)
+
+        #expect(session.outcome(endedAt: 0) == .activate(item: 2))
+    }
+
+    @Test func choosingAmongNothingCancels() {
+        #expect(SwitchSession(choosingAmong: 0).outcome(endedAt: 0) == .cancel)
+    }
+
+    @Test func startingOnTheCurrentItemCancelsThere() {
+        var session = SwitchSession(onCurrentItemOf: 4)
+        #expect(session.selection == 0)
+        #expect(session.outcome(endedAt: 0) == .cancel)
+
+        session.move(travel: 7)
+        #expect(session.outcome(endedAt: 0) == .activate(item: 1))
+    }
 }

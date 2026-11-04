@@ -35,6 +35,8 @@ public struct SwitchSession: Sendable {
 
     private let settings: Settings
     private let began: Double
+    /// Whether the first Item is the Current Item, which lifting on cancels.
+    private let hasCurrentItem: Bool
     /// The travel at which the finger position maps onto `start`.
     private var origin = 0.0
     private let start: Int
@@ -47,12 +49,37 @@ public struct SwitchSession: Sendable {
         self.itemCount = itemCount
         self.began = began
         self.settings = settings
+        hasCurrentItem = true
         start = switch (itemCount, direction) {
         case (...1, _): 0
         case (_, .right): 1
         case (_, .left): itemCount - 1
         }
         selection = start
+    }
+
+    /// A session that starts on the Current Item, as when the App Switcher opens on the Active App's
+    /// windows and the Selection comes back to it. There is no Quick Switch.
+    /// - Parameter itemCount: Items in the Switcher, the Current Item first.
+    public init(onCurrentItemOf itemCount: Int, settings: Settings = .init()) {
+        self.itemCount = itemCount
+        self.settings = settings
+        began = -.infinity
+        hasCurrentItem = true
+        start = 0
+        selection = 0
+    }
+
+    /// A session among Items none of which is current, such as another app's windows. It starts on the
+    /// first Item, lifting activates whichever Item is selected, and there is no Quick Switch.
+    /// - Parameter itemCount: Items in the Switcher.
+    public init(choosingAmong itemCount: Int, settings: Settings = .init()) {
+        self.itemCount = itemCount
+        self.settings = settings
+        began = -.infinity
+        hasCurrentItem = false
+        start = 0
+        selection = 0
     }
 
     /// Moves the Selection for the total travel since the session began. Returns whether it changed.
@@ -75,6 +102,7 @@ public struct SwitchSession: Sendable {
 
     /// The result of lifting the fingers at `time`.
     public func outcome(endedAt time: Double) -> Outcome {
+        guard hasCurrentItem else { return itemCount > 0 ? .activate(item: selection) : .cancel }
         let isQuickSwitch = time - began < settings.quickSwitchDuration
         let item = isQuickSwitch ? 1 : selection
         guard itemCount > 1, item > 0 else { return .cancel }

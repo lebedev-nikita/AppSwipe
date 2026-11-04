@@ -471,6 +471,16 @@
         }
       }
     },
+    "Swipe down for windows": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп вниз для окон"
+          }
+        }
+      }
+    },
     "Swipe here with three or four fingers": {
       "localizations": {
         "ru": {
@@ -517,6 +527,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пока одно из этих приложений на переднем плане, свайпы ничего не делают. Подходит для игр и приложений со своими жестами."
+          }
+        }
+      }
+    },
+    "Swiping down with four fingers shows App Exposé.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп четырьмя пальцами вниз показывает App Exposé."
+          }
+        }
+      }
+    },
+    "Swiping down with four fingers shows the windows of the app in front, instead of App Exposé.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп четырьмя пальцами вниз показывает окна приложения на переднем плане вместо App Exposé."
+          }
+        }
+      }
+    },
+    "Swiping down with three fingers shows App Exposé.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп тремя пальцами вниз показывает App Exposé."
+          }
+        }
+      }
+    },
+    "Swiping down with three fingers shows the windows of the app in front, instead of App Exposé.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свайп тремя пальцами вниз показывает окна приложения на переднем плане вместо App Exposé."
           }
         }
       }

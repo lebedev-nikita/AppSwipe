@@ -13,7 +13,7 @@ The Switcher opened by a three-finger horizontal swipe, or four-finger if the fi
 _Avoid_: Cmd-Tab menu, app menu
 
 **Window Switcher**:
-The Switcher opened by a four-finger horizontal swipe, or three-finger if the finger counts are swapped. It lists only the Active App's windows on the Current Space, as Window Previews, the counterpart of Cmd-` with a visible list.
+The Switcher opened by a four-finger horizontal swipe, or three-finger if the finger counts are swapped. It lists only the Active App's windows on the Current Space, as Window Previews, the counterpart of Cmd-` with a visible list. A swipe down in the App Switcher opens it for the selected app instead, under the App Switcher.
 _Avoid_: Window menu, Cmd-` menu, Exposé
 
 **Item**:

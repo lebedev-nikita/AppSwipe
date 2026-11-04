@@ -16,6 +16,7 @@ final class Preferences {
         static let appDisplays = "AppSwitcherDisplays"
         static let windowDisplays = "WindowSwitcherDisplays"
         static let swapFingerCounts = "SwapFingerCounts"
+        static let swipeDownForWindows = "SwipeDownForWindows"
         static let stepLength = "StepLength"
         static let excludedApps = "ExcludedApps"
         static let hideFinderWithoutWindows = "HideFinderWithoutWindows"
@@ -38,6 +39,10 @@ final class Preferences {
     var windowDisplays: DisplayScope { didSet { defaults.set(windowDisplays.rawValue, forKey: Key.windowDisplays) } }
     /// Four fingers for the App Switcher and three for the Window Switcher.
     var swapFingerCounts: Bool { didSet { defaults.set(swapFingerCounts, forKey: Key.swapFingerCounts) } }
+    /// A swipe down with the App Switcher's fingers opens it on the Active App's windows.
+    var swipeDownForWindows: Bool {
+        didSet { defaults.set(swipeDownForWindows, forKey: Key.swipeDownForWindows) }
+    }
     /// Finger travel per Step, in millimetres.
     var stepLength: Double { didSet { defaults.set(stepLength, forKey: Key.stepLength) } }
     /// Bundle identifiers of apps during which swipes do nothing.
@@ -94,6 +99,7 @@ final class Preferences {
         appDisplays = defaults.string(forKey: Key.appDisplays).flatMap(DisplayScope.init) ?? .all
         windowDisplays = defaults.string(forKey: Key.windowDisplays).flatMap(DisplayScope.init) ?? .all
         swapFingerCounts = defaults.bool(forKey: Key.swapFingerCounts)
+        swipeDownForWindows = defaults.bool(forKey: Key.swipeDownForWindows)
         stepLength = defaults.double(forKey: Key.stepLength)
         excludedApps = defaults.stringArray(forKey: Key.excludedApps) ?? []
         hideFinderWithoutWindows = defaults.bool(forKey: Key.hideFinderWithoutWindows)

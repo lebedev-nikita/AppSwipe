@@ -42,7 +42,7 @@ struct SettingsView: View {
                 if current != permissions { permissions = current }
             }
         }
-        .onChange(of: switcherFingers) { conflicts.refresh(fingers: switcherFingers) }
+        .onChange(of: swipes) { conflicts.refresh(swipes) }
     }
 
     private var permissionsSection: some View {
@@ -97,7 +97,7 @@ struct SettingsView: View {
         if canTurnOffConflicts { Button("Turn Off Conflicting Gestures", action: turnOffConflicts) }
         if hasThreeFingerDrag { Button("Open Accessibility Settings", action: Self.openPointerSettings) }
         if conflicts.canRestore {
-            Button("Restore Original Gestures") { conflicts.restore(fingers: switcherFingers) }
+            Button("Restore Original Gestures") { conflicts.restore(swipes) }
         }
     }
 
@@ -134,6 +134,11 @@ struct SettingsView: View {
             Picker(selection: $preferences.appDisplays) { displayOptions } label: {
                 Text("Show apps from")
                 Text("From one display, the App Switcher lists the app in front and the apps with a window there.")
+            }
+            .disabled(!preferences.appSwitcherEnabled)
+            Toggle(isOn: $preferences.swipeDownForWindows) {
+                Text("Swipe down for windows")
+                Text(swipeDownDescription(preferences.fingers(for: .apps)))
             }
             .disabled(!preferences.appSwitcherEnabled)
             Toggle(isOn: $preferences.windowSwitcherEnabled) {
@@ -232,12 +237,15 @@ struct SettingsView: View {
         }
     }
 
-    /// Finger counts of the enabled Switchers.
-    private var switcherFingers: Set<Int> {
-        var fingers: Set<Int> = []
-        if preferences.appSwitcherEnabled { fingers.insert(preferences.fingers(for: .apps)) }
-        if preferences.windowSwitcherEnabled { fingers.insert(preferences.fingers(for: .windows)) }
-        return fingers
+    /// The swipes of the enabled Switchers.
+    private var swipes: TrackpadConflicts.Swipes {
+        var swipes = TrackpadConflicts.Swipes()
+        if preferences.appSwitcherEnabled {
+            swipes.sideways.insert(preferences.fingers(for: .apps))
+            if preferences.swipeDownForWindows { swipes.down = preferences.fingers(for: .apps) }
+        }
+        if preferences.windowSwitcherEnabled { swipes.sideways.insert(preferences.fingers(for: .windows)) }
+        return swipes
     }
 
     private var canTurnOffConflicts: Bool { conflicts.conflicts.contains { $0 != .threeFingerDrag } }
@@ -246,15 +254,25 @@ struct SettingsView: View {
     private func refresh() {
         permissions = PermissionState()
         runningApps = RunningApp.all()
-        conflicts.refresh(fingers: switcherFingers)
+        conflicts.refresh(swipes)
     }
 
     private func fingersDescription(_ fingers: Int) -> LocalizedStringKey {
         fingers == 3 ? "Swipe sideways with three fingers." : "Swipe sideways with four fingers."
     }
 
+    private func swipeDownDescription(_ fingers: Int) -> LocalizedStringKey {
+        fingers == 3
+            ? "Swiping down with three fingers shows the windows of the app in front, instead of App Exposé."
+            : "Swiping down with four fingers shows the windows of the app in front, instead of App Exposé."
+    }
+
     private func description(of conflict: TrackpadConflicts.Conflict) -> LocalizedStringKey {
         switch conflict {
+        case .appExpose(let fingers):
+            fingers == 3
+                ? "Swiping down with three fingers shows App Exposé."
+                : "Swiping down with four fingers shows App Exposé."
         case .spacesSwipe(let fingers):
             fingers == 3
                 ? "Swiping with three fingers switches between full-screen apps."
@@ -267,7 +285,7 @@ struct SettingsView: View {
     }
 
     private func turnOffConflicts() {
-        if !conflicts.turnOff(fingers: switcherFingers) {
+        if !conflicts.turnOff(swipes) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Trackpad-Settings.extension")!)
         }
     }
