@@ -3,7 +3,7 @@ import Darwin
 
 /// Lets a background app hide the cursor.
 ///
-/// The WindowServer ignores `CGDisplayHideCursor` from apps that aren't frontmost, and OpenSwipe never
+/// The WindowServer ignores `CGDisplayHideCursor` from apps that aren't frontmost, and AppSwipe never
 /// is. The private connection property "SetsCursorInBackground" lifts that restriction. Private API, so
 /// it lives here alone; see docs/adr/0003-touch-input-and-private-apis.md.
 enum BackgroundCursor {

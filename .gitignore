@@ -1,5 +1,5 @@
 .DS_Store
 /build/
-/OpenSwipe.xcodeproj/
+/AppSwipe.xcodeproj/
 .swiftpm/
 /SwitchCore/.build/

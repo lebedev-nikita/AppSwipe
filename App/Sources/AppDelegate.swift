@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let bundle = Bundle.main
         let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         DiagnosticLog.write(
-            "launched OpenSwipe \(version) on \(ProcessInfo.processInfo.operatingSystemVersionString); "
+            "launched AppSwipe \(version) on \(ProcessInfo.processInfo.operatingSystemVersionString); "
                 + "accessibility \(Permissions.hasAccessibility), input monitoring \(Permissions.canListenToInput), "
                 + "screen recording \(Permissions.hasScreenRecording)")
         setUpStatusItem()
@@ -47,6 +47,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
         if UserDefaults.standard.bool(forKey: "ThemeTest") { switchController.themeTest() }
+        if UserDefaults.standard.bool(forKey: "ReadmeShots") { switchController.readmeShots() }
         if UserDefaults.standard.bool(forKey: "GlassTest") {
             switchController.glassTest(native: UserDefaults.standard.bool(forKey: "GlassTestNative"))
         }
@@ -118,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    /// Opening OpenSwipe again, as from Finder or Spotlight, shows Settings, the way back when the menu
+    /// Opening AppSwipe again, as from Finder or Spotlight, shows Settings, the way back when the menu
     /// bar icon is hidden.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         settings.show()
@@ -145,7 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setUpStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "hand.draw", accessibilityDescription: "OpenSwipe")
+        item.button?.image = NSImage(systemSymbolName: "hand.draw", accessibilityDescription: "AppSwipe")
         let menu = NSMenu()
         menu.delegate = self
         item.menu = menu
@@ -157,12 +158,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(withTitle: String(localized: "Settings…"), action: #selector(showSettings), keyEquivalent: ",")
             .target = self
         let pause = menu.addItem(
-            withTitle: String(localized: "Pause OpenSwipe"), action: #selector(togglePause), keyEquivalent: "")
+            withTitle: String(localized: "Pause AppSwipe"), action: #selector(togglePause), keyEquivalent: "")
         pause.target = self
         pause.state = preferences.isPaused ? .on : .off
         menu.addItem(.separator())
         menu.addItem(
-            withTitle: String(localized: "Quit OpenSwipe"), action: #selector(NSApplication.terminate(_:)),
+            withTitle: String(localized: "Quit AppSwipe"), action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q")
     }
 

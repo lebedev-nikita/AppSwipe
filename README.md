@@ -1,25 +1,61 @@
-<img src="assets/icon.svg" width="64" height="64" alt="">
+<img src="assets/icon.png" width="96" height="96" alt="">
 
-# OpenSwipe
+# AppSwipe
 
-A macOS app that switches apps and windows with trackpad swipes. A three-finger horizontal swipe opens an app switcher like Cmd-Tab; a four-finger swipe opens a switcher for the active app's windows. The switcher follows your fingers, and lifting them switches.
+Switch apps and windows on a Mac with trackpad swipes. Swipe sideways with three fingers for an app switcher like Cmd-Tab, or with four fingers for the windows of the app you're in. The switcher follows your fingers, and lifting them switches.
 
-**Status:** early development. The three-finger App Switcher and the four-finger Window Switcher with window previews work, including Live Switching, and a Settings screen with English and Russian text. See the [specification](docs/spec.md) for the plan.
+![The App Switcher](docs/images/app-switcher.png)
 
-## Build and run
+![The Window Switcher, with previews of the active app's windows](docs/images/window-switcher.png)
 
-Requires macOS 26 or later, Xcode, [mise](https://mise.jdx.dev) and [Just](https://just.systems).
+## Install
 
-1. Create a self-signed code-signing certificate named `OpenSwipe Development` in your login keychain. Keychain Access → Certificate Assistant → Create a Certificate…, with the type set to Code Signing. A stable certificate keeps macOS's Accessibility grant across rebuilds.
+Requires macOS 26 or later.
+
+```sh
+brew install --cask lebedev-nikita/tap/appswipe
+```
+
+Releases are signed with a self-signed certificate and are not notarized by Apple. If macOS blocks AppSwipe the first time, open System Settings → Privacy & Security and click Open Anyway.
+
+AppSwipe asks for two permissions:
+
+- **Accessibility**, to read swipes and switch apps and windows. Required.
+- **Screen Recording**, for window previews. Optional: without it the Window Switcher shows app icons. Takes effect after AppSwipe restarts.
+
+macOS uses the same three- and four-finger swipes to move between full-screen apps. Turn those off under Trackpad Gestures in AppSwipe's settings, which can restore them later.
+
+Update with:
+
+```sh
+brew update
+brew upgrade --cask appswipe
+```
+
+## Use
+
+- Swipe sideways with three fingers and keep moving to step through apps, most recently used first. Lift to switch. A quick flick switches straight to the previous app.
+- Swipe with four fingers to step through the active app's windows on the current Space.
+- To cancel, move back to the first item and lift, or press Esc.
+
+Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. They can swap the finger counts, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
+
+![Settings](docs/images/settings.png)
+
+## Build from source
+
+Requires Xcode 27, [mise](https://mise.jdx.dev) and [Just](https://just.systems).
+
+1. Create a self-signed code-signing certificate named `AppSwipe Development` in your login keychain: Keychain Access → Certificate Assistant → Create a Certificate…, with the type set to Code Signing. macOS ties Accessibility access to the signing certificate, so a stable one keeps it across rebuilds.
 2. Build and launch:
 
    ```sh
    just run
    ```
 
-3. Grant OpenSwipe Accessibility access when asked.
+Logs are written to `~/Library/Logs/AppSwipe`. Run `just --list` for the other commands.
 
-Logs are written to `~/Library/Logs/OpenSwipe`. Run `just --list` for the other commands.
+To release, bump `MARKETING_VERSION` in `project.yml`, commit, then run `just release` to publish a GitHub release and `just cask` to update the cask in [lebedev-nikita/homebrew-tap](https://github.com/lebedev-nikita/homebrew-tap). Sign every release with the same certificate, or users lose the permissions they granted.
 
 ## Documentation
 

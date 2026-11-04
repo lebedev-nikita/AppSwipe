@@ -131,12 +131,12 @@
         }
       }
     },
-    "No trackpad gestures conflict with OpenSwipe.": {
+    "No trackpad gestures conflict with AppSwipe.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Жесты трекпада не мешают OpenSwipe."
+            "value": "Жесты трекпада не мешают AppSwipe."
           }
         }
       }
@@ -171,32 +171,32 @@
         }
       }
     },
-    "OpenSwipe Settings": {
+    "AppSwipe Settings": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Настройки OpenSwipe"
+            "value": "Настройки AppSwipe"
           }
         }
       }
     },
-    "Optional, for window previews. Takes effect after OpenSwipe restarts.": {
+    "Optional, for window previews. Takes effect after AppSwipe restarts.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Необязательно, для превью окон. Действует после перезапуска OpenSwipe."
+            "value": "Необязательно, для превью окон. Действует после перезапуска AppSwipe."
           }
         }
       }
     },
-    "Pause OpenSwipe": {
+    "Pause AppSwipe": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Приостановить OpenSwipe"
+            "value": "Приостановить AppSwipe"
           }
         }
       }
@@ -211,12 +211,12 @@
         }
       }
     },
-    "Quit OpenSwipe": {
+    "Quit AppSwipe": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Завершить OpenSwipe"
+            "value": "Завершить AppSwipe"
           }
         }
       }
@@ -251,12 +251,12 @@
         }
       }
     },
-    "Restart OpenSwipe": {
+    "Restart AppSwipe": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Перезапустить OpenSwipe"
+            "value": "Перезапустить AppSwipe"
           }
         }
       }
@@ -461,12 +461,12 @@
         }
       }
     },
-    "When hidden, open OpenSwipe again to see these settings.": {
+    "When hidden, open AppSwipe again to see these settings.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Если значок скрыт, откройте OpenSwipe ещё раз, чтобы увидеть эти настройки."
+            "value": "Если значок скрыт, откройте AppSwipe ещё раз, чтобы увидеть эти настройки."
           }
         }
       }
@@ -491,12 +491,12 @@
         }
       }
     },
-    "macOS gestures that use the same swipes take them before OpenSwipe can.": {
+    "macOS gestures that use the same swipes take them before AppSwipe can.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Жесты macOS на тех же свайпах перехватывают их раньше OpenSwipe."
+            "value": "Жесты macOS на тех же свайпах перехватывают их раньше AppSwipe."
           }
         }
       }

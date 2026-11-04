@@ -1,12 +1,12 @@
 import Foundation
 
-/// A plain-text log in ~/Library/Logs/OpenSwipe, for diagnosing the app on a user's machine.
+/// A plain-text log in ~/Library/Logs/AppSwipe, for diagnosing the app on a user's machine.
 @MainActor
 enum DiagnosticLog {
     static let directory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-        .appending(path: "Logs/OpenSwipe", directoryHint: .isDirectory)
+        .appending(path: "Logs/AppSwipe", directoryHint: .isDirectory)
 
-    private static let file = directory.appending(path: "openswipe.log")
+    private static let file = directory.appending(path: "appswipe.log")
     private static let timestamp = Date.ISO8601FormatStyle(includingFractionalSeconds: true, timeZone: .current)
 
     static func write(_ message: String) {
@@ -21,7 +21,7 @@ enum DiagnosticLog {
             try handle.seekToEnd()
             try handle.write(contentsOf: Data(line.utf8))
         } catch {
-            print("OpenSwipe: cannot write the diagnostic log: \(error)")
+            print("AppSwipe: cannot write the diagnostic log: \(error)")
         }
     }
 }

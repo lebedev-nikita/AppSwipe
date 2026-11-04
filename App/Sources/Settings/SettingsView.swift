@@ -14,7 +14,7 @@ struct SettingsView: View {
                 Toggle("Launch at login", isOn: $preferences.launchAtLogin)
                 Toggle(isOn: $preferences.showMenuBarIcon) {
                     Text("Show icon in the menu bar")
-                    Text("When hidden, open OpenSwipe again to see these settings.")
+                    Text("When hidden, open AppSwipe again to see these settings.")
                 }
             }
 
@@ -78,21 +78,21 @@ struct SettingsView: View {
                     title: "Accessibility", detail: "Required to read swipes and switch windows.",
                     isGranted: permissions.accessibility, open: Permissions.openAccessibilitySettings)
                 PermissionRow(
-                    title: "Screen Recording", detail: "Optional, for window previews. Takes effect after OpenSwipe restarts.",
+                    title: "Screen Recording", detail: "Optional, for window previews. Takes effect after AppSwipe restarts.",
                     isGranted: permissions.screenRecording,
                     open: {
-                        // Adds OpenSwipe to the list in System Settings, where the user turns it on.
+                        // Adds AppSwipe to the list in System Settings, where the user turns it on.
                         Permissions.requestScreenRecording()
                         Permissions.openScreenRecordingSettings()
                     })
                 if !permissions.screenRecording {
-                    Button("Restart OpenSwipe", action: Self.restart)
+                    Button("Restart AppSwipe", action: Self.restart)
                 }
             }
 
             Section {
                 if conflicts.conflicts.isEmpty {
-                    Label("No trackpad gestures conflict with OpenSwipe.", systemImage: "checkmark.circle")
+                    Label("No trackpad gestures conflict with AppSwipe.", systemImage: "checkmark.circle")
                         .foregroundStyle(.secondary)
                 }
                 ForEach(conflicts.conflicts, id: \.self) { conflict in
@@ -112,7 +112,7 @@ struct SettingsView: View {
             } header: {
                 Text("Trackpad Gestures")
             } footer: {
-                Text("macOS gestures that use the same swipes take them before OpenSwipe can.")
+                Text("macOS gestures that use the same swipes take them before AppSwipe can.")
             }
 
             Section("Diagnostics") {
