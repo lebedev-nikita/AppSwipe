@@ -11,8 +11,8 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: 0.1.4
-    CURRENT_PROJECT_VERSION: 5
+    MARKETING_VERSION: 0.2.0
+    CURRENT_PROJECT_VERSION: 6
     # Builds are signed by `just build` with the local "AppSwipe Development" certificate,
     # which Xcode does not list because it is self-signed.
     CODE_SIGNING_ALLOWED: NO
