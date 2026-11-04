@@ -79,7 +79,7 @@ final class Preferences {
             Key.showMenuBarIcon: true,
             Key.appSwitcherEnabled: true,
             Key.windowSwitcherEnabled: true,
-            Key.stepLength: 10.0,
+            Key.stepLength: 8.0,
             Key.hideFinderWithoutWindows: true,
         ])
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
