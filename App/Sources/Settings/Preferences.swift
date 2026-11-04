@@ -43,7 +43,7 @@ final class Preferences {
     var isPaused: Bool { didSet { defaults.set(isPaused, forKey: Key.isPaused) } }
     var recordTouches: Bool { didSet { defaults.set(recordTouches, forKey: Key.recordTouches) } }
 
-    /// Whether OpenSwipe opens at login, as registered with the system.
+    /// Whether AppSwipe opens at login, as registered with the system.
     var launchAtLogin: Bool {
         get {
             access(keyPath: \.launchAtLogin)
@@ -60,7 +60,7 @@ final class Preferences {
         }
     }
 
-    /// True only the first time OpenSwipe launches.
+    /// True only the first time AppSwipe launches.
     let isFirstLaunch: Bool
 
     private init() {

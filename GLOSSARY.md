@@ -1,4 +1,4 @@
-# open-swipe
+# AppSwipe
 
 A macOS app that switches between apps and windows with horizontal trackpad swipes, showing a switcher overlay that follows the fingers until they lift.
 

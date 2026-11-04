@@ -2,7 +2,7 @@ import AppKit
 
 /// Running apps with a Dock icon, most recently used first, like the Cmd-Tab order.
 ///
-/// macOS has no public API for the Cmd-Tab order, so the order before OpenSwipe launched is a guess
+/// macOS has no public API for the Cmd-Tab order, so the order before AppSwipe launched is a guess
 /// from the on-screen window stacking order; activations after that are tracked exactly. The list is
 /// kept current from workspace notifications, so reading it at the start of a swipe costs nothing.
 @MainActor

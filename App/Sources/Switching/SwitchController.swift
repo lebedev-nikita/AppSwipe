@@ -250,6 +250,54 @@ final class SwitchController {
                 + "\(Int(frame.width)),\(Int(frame.height))")
     }
 
+    /// Shows the App Switcher, then the Window Switcher over three demo windows of this app, over a
+    /// made-up wallpaper, on a fixed timeline that a script captures for the README.
+    func readmeShots() {
+        let backdrop = GlassTestBackdrop(size: NSSize(width: 1280, height: 560), wallpaper: true)
+        Task {
+            backdrop.show()
+            DiagnosticLog.write("readme shots: start, rect \(backdrop.captureRect)")
+            try? await Task.sleep(for: .seconds(0.8))
+            prepareApps()
+            appPanel.select(2)
+            appPanel.show()
+            try? await Task.sleep(for: .seconds(0.6))
+            DiagnosticLog.write("readme shots: app switcher")
+            try? await Task.sleep(for: .seconds(1))
+            appPanel.hide()
+
+            let screen = NSScreen.screens[0].frame
+            let titles = ["Lagoon.heic", "Dunes.heic", "Aurora.heic"]
+            let windows = titles.enumerated().map { index, title in
+                let size = NSSize(width: 520, height: 340)
+                let origin = NSPoint(
+                    x: screen.midX - 560 + CGFloat(index) * 300, y: screen.midY - 200 + CGFloat(index % 2) * 90)
+                let window = NSWindow(
+                    contentRect: NSRect(origin: origin, size: size), styleMask: [.titled, .closable, .miniaturizable],
+                    backing: .buffered, defer: false)
+                window.title = title
+                window.contentView = WallpaperView(seed: index + 1)
+                window.level = .floating
+                window.isReleasedWhenClosed = false
+                window.orderFrontRegardless()
+                return window
+            }
+            // Windows are listed front to back; the last one opened is in front.
+            try? await Task.sleep(for: .seconds(0.8))
+            prepareWindows(of: NSRunningApplication.current)
+            try? await Task.sleep(for: .seconds(1.2))
+            windowPanel.select(1)
+            windowPanel.show()
+            try? await Task.sleep(for: .seconds(0.6))
+            DiagnosticLog.write("readme shots: window switcher")
+            try? await Task.sleep(for: .seconds(1))
+            windowPanel.hide()
+            windows.forEach { $0.close() }
+            backdrop.hide()
+            DiagnosticLog.write("readme shots: done")
+        }
+    }
+
     /// Shows the App Switcher in the light and then the dark appearance over a flat backdrop the colour
     /// of a photo, on a fixed timeline that a script captures.
     func themeTest() {

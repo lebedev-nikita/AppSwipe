@@ -20,7 +20,7 @@ final class SettingsWindow {
             rootView: SettingsView(preferences: .shared, conflicts: conflicts, trial: trial))
         controller.sizingOptions = [.preferredContentSize]
         let window = NSWindow(contentViewController: controller)
-        window.title = String(localized: "OpenSwipe Settings")
+        window.title = String(localized: "AppSwipe Settings")
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
         window.center()
