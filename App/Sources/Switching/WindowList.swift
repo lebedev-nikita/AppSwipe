@@ -39,7 +39,13 @@ final class WindowList {
               let windows = value as? [AXUIElement]
         else { return [] }
         let appName = app.localizedName ?? ""
-        let entries = windows.compactMap { Self.entry(for: $0, appName: appName) }
+        var entries = windows.compactMap { Self.entry(for: $0, appName: appName) }
+        if AppActivator.isSelf(app) {
+            // AppSwipe's own Switchers aren't windows to switch to.
+            let switchers = Set(NSApp.windows.filter { $0.styleMask.contains(.nonactivatingPanel) }
+                .map { CGWindowID($0.windowNumber) })
+            entries.removeAll { $0.id.map(switchers.contains) ?? true }
+        }
         // A stable sort keeps the front-to-back order within each group.
         return entries.enumerated().sorted { lhs, rhs in
             let (left, right) = (Self.group(lhs.element), Self.group(rhs.element))
@@ -99,14 +105,23 @@ final class WindowList {
 enum WindowActivator {
     /// Raises the window above the app's others and makes it the app's main window.
     static func raise(_ window: WindowEntry, of app: NSRunningApplication) {
+        if AppActivator.isSelf(app) {
+            // Activating itself through Accessibility and NSRunningApplication loses to the app in front.
+            guard let id = window.id, let own = NSApp.window(withWindowNumber: Int(id)) else { return }
+            NSApp.activate(ignoringOtherApps: true)
+            own.makeKeyAndOrderFront(nil)
+            return
+        }
         AXUIElementPerformAction(window.element, kAXRaiseAction as CFString)
         AXUIElementSetAttributeValue(window.element, kAXMainAttribute as CFString, kCFBooleanTrue)
-        if !app.isActive { app.activate() }
+        if !app.isActive { AppActivator.bringForward(app, options: []) }
     }
 
     /// Commit: un-minimizes the window if needed, then raises it.
     static func focus(_ window: WindowEntry, of app: NSRunningApplication) {
-        if window.isMinimized {
+        if AppActivator.isSelf(app), window.isMinimized, let id = window.id {
+            NSApp.window(withWindowNumber: Int(id))?.deminiaturize(nil)
+        } else if window.isMinimized {
             AXUIElementSetAttributeValue(window.element, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
         }
         raise(window, of: app)

@@ -2,7 +2,7 @@
 
 # AppSwipe
 
-Switch apps and windows on a Mac with trackpad swipes. Swipe sideways with three fingers for an app switcher like Cmd-Tab, or with four fingers for the windows of the app you're in. The switcher follows your fingers, and lifting them switches.
+Switch apps and windows on a Mac with trackpad swipes. Swipe sideways with three fingers for an app switcher like Cmd-Tab, or down for the windows of the app you're in. The switcher follows your fingers, and lifting them switches.
 
 ![The App Switcher](docs/images/app-switcher.png)
 
@@ -23,7 +23,7 @@ AppSwipe asks for two permissions:
 - **Accessibility**, to read swipes and switch apps and windows. Required.
 - **Screen Recording**, for window previews. Optional: without it the Window Switcher shows app icons. Takes effect after AppSwipe restarts.
 
-macOS uses the same three- and four-finger swipes to move between full-screen apps. Turn those off under Trackpad Gestures in AppSwipe's settings, which can restore them later. Restore them before uninstalling AppSwipe, since removing the app leaves them off.
+macOS uses the same swipes to move between full-screen apps and for App Exposé. Turn those off under Trackpad Gestures in AppSwipe's settings, which can restore them later. Restore them before uninstalling AppSwipe, since removing the app leaves them off.
 
 Update with:
 
@@ -35,11 +35,11 @@ brew upgrade --cask app-swipe
 ## Use
 
 - Swipe sideways with three fingers and keep moving to step through apps, most recently used first. Lift to switch. A quick flick switches straight to the previous app.
-- Swipe with four fingers to step through the active app's windows on the current Space.
-- While stepping through apps, move the fingers down to step through the selected app's windows, and up to go back to the apps. Settings can make a swipe down start there with the active app's windows, in place of App Exposé.
+- Swipe down with three fingers, then sideways, to step through the active app's windows on the current Space.
+- While stepping through apps, move the fingers down to step through the selected app's windows, and up to go back to the apps.
 - To cancel, move back to the first item and lift, or press Esc.
 
-Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. While they are open, ⌘W closes them and ⌘Q quits AppSwipe. They can pause AppSwipe, swap the finger counts, limit each switcher to the display with the pointer, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
+Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. While they are open, ⌘W closes them and ⌘Q quits AppSwipe. They can pause AppSwipe, switch to four-finger swipes, limit each switcher to the display with the pointer, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
 
 ![Settings](docs/images/settings.png)
 

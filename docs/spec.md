@@ -1,10 +1,10 @@
 # AppSwipe v1 specification
 
-AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **bold** are defined in [GLOSSARY.md](../GLOSSARY.md); the reasons behind the larger decisions are in [docs/adr](adr/).
+AppSwipe switches apps and windows with trackpad swipes: sideways for apps, down for an app's windows. Terms in **bold** are defined in [GLOSSARY.md](../GLOSSARY.md); the reasons behind the larger decisions are in [docs/adr](adr/).
 
 ## Switchers
 
-### App Switcher (three fingers by default)
+### App Switcher
 
 - Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting, on by default, leaves out Finder while it has no windows; minimized windows and windows on other Spaces count, the desktop doesn't, and Finder stays when it is the Active App.
 - Displays: apps from all displays by default. A setting limits the list to the display with the pointer: the Active App, then the apps with a window on the Current Space of that display, which leaves out hidden apps and apps without visible windows. A window belongs to the display that shows most of it.
@@ -12,25 +12,29 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 - Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
 - Commit activates the app, brings all its windows forward, and unhides it if hidden. If the app has no visible window, Commit behaves like a click on its Dock icon: it restores the most recent minimized window, or lets the app open a new one.
 
-### Window Switcher (four fingers by default)
+### Window Switcher
 
-- Items: the Active App's windows on the **Current Space**. That means ordinary windows, dialogs, and panels such as tool palettes.
+The Window Switcher has no swipe of its own: a swipe down shows it under the App Switcher, as described in [Windows of an app](#windows-of-an-app).
+
+- Items: the app's windows on the **Current Space**. That means ordinary windows, dialogs, and panels such as tool palettes.
 - Displays: windows on all displays by default. A setting limits the list to the windows on the display with the pointer, minimized ones included by where they were before minimizing.
 - Excluded:
   - transient popups, such as menus, popovers, tooltips and autocomplete lists, because they close as soon as focus moves;
   - invisible and zero-size windows;
-  - sheets, which belong to their parent window.
+  - sheets, which belong to their parent window;
+  - AppSwipe's own Switchers, while they show over AppSwipe's Settings.
 - Order: ordinary windows and dialogs come first, most recently used first. Panels come next, then minimized windows, which are marked as minimized.
 - Look: one row of **Window Previews** of equal height, with the selected window's title below. An untitled window shows the app's name.
 - Commit focuses the window, un-minimizing it first if needed.
 
 ### Shared behaviour
 
-- The Selection is a rounded highlight behind the selected icon or preview, as in the native switcher.
+- The Selection is a rounded highlight behind the selected icon or preview, as in the native switcher. The panel's corners are concentric with the highlight's, so the Window Switcher, whose previews have squarer corners than icons, has squarer corners too.
 - Like the native switcher, the glass is lighter than what is behind it in the light theme and darker in the dark theme, and the highlight and title follow the theme.
 - If the list has a single Item, the Switcher still opens, so the user sees that the gesture registered. With no windows at all, the Window Switcher shows a "No windows" placeholder.
 - Window Previews come from ScreenCaptureKit and may be slightly stale. A preview is captured when the Switcher opens, or the last time the window was visible, and is cached.
 - Without Screen Recording permission, each preview is replaced by the app icon and the window title.
+- The selected Item's title stays inside the glass's rounded edges. The panel widens to give titles at least 240 pt, about 30 characters, and a longer title is cut short with an ellipsis. The width follows the longest title in the list, so it doesn't change as the Selection moves.
 - The row of Items:
   - stays a single row;
   - shrinks the Items down to a minimum size as the list grows;
@@ -39,7 +43,7 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 
 ## Switch Session
 
-1. A session starts when exactly three or four fingers travel horizontally past a small opening threshold. The finger count at that moment fixes which Switcher opens; fingers added later are ignored.
+1. A session starts when exactly three fingers, or four if Settings say so, travel sideways or down past a small opening threshold. It opens the App Switcher; a swipe down also opens the Active App's windows, described below. Fingers added later are ignored, and a swipe up does nothing.
 2. If the fingers start moving right, the Selection lands on the second Item. If they start moving left, it lands on the last Item, like Cmd-Shift-Tab.
 3. Each **Step** moves the Selection one Item in the direction of finger travel. Moving back moves the Selection back.
    - A Step is a fixed physical distance, 8 mm by default and adjustable in Settings, with no acceleration.
@@ -50,20 +54,20 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 6. The cursor stays still from the moment the fingers land, and is hidden while the Switcher shows, so it never wanders over other apps. It reappears where it was. Clicks and Force Clicks during a session don't reach the app under the cursor.
 7. The Switcher appears the moment the session opens. Lifting the fingers within about 200 ms of that is a **Quick Switch**: it Commits to the second Item, whatever the direction and travel. In the spike, quick flicks took 62–133 ms from opening to lift, while deliberate swipes took 480–660 ms.
 
-### Windows of the selected app
+### Windows of an app
 
-In the App Switcher, moving the fingers down without lifting them opens the Window Switcher for the selected app, under the App Switcher, which stays open. The Selection moves to the app's windows, starting on the first of them, and sideways travel steps through them. Moving the fingers up hides them and gives the Selection back to the App Switcher, on the same app.
+In the App Switcher, moving the fingers down without lifting them opens the Window Switcher for the selected app, under the App Switcher, which stays open. The two are centred on the display together, and the App Switcher moves back to the centre when the windows hide. The Selection moves to the app's windows, starting on the first of them, and sideways travel steps through them. Moving the fingers up hides them and gives the Selection back to the App Switcher, on the same app.
 
 - A stroke counts once the fingers travel 6 mm up or down and at least twice as far as sideways, counting from when they last moved sideways. Drift while stepping through Items doesn't add up to a stroke.
 - The windows are those the Window Switcher would list for that app, from the same displays.
 - Commit focuses the selected window and activates its app, unhiding it if hidden. With no windows, Commit switches to the app as the App Switcher does.
 - Every window Commits, the first one too, and there is no Quick Switch. To Cancel, move up and lift on the Current Item, or press Esc.
 - With Live Switching, the first window comes forward as the windows open, and then each window the Selection lands on. A hidden app stays hidden until Commit.
-- A setting, off by default, opens this straight away, in place of App Exposé: swiping down with the App Switcher's fingers opens the App Switcher on the Active App with its windows below. Moving up gives the Selection to the Active App, where lifting Cancels.
+- A swipe down from the start opens this straight away, in place of App Exposé: the App Switcher on the Active App, with its windows below. Moving up gives the Selection to the Active App, where lifting Cancels.
 
 ### Live Switching
 
-With **Live Switching** on, there is no waiting for the fingers to lift: the selected Item is activated the moment the Selection lands on it, starting with the second Item when the session opens. It works the same in both Switchers.
+With **Live Switching** on, there is no waiting for the fingers to lift: the selected Item is activated the moment the Selection lands on it, starting with the second Item when the session opens. It works the same for apps and for windows.
 
 - While the Selection passes over Items, activation is plain:
   - an app without windows becomes active without opening one;
@@ -73,7 +77,7 @@ With **Live Switching** on, there is no waiting for the fingers to lift: the sel
 - Quick Switch still applies.
 - Cancel, by lifting on the Current Item or pressing Esc, activates the Active App again.
 - In the App Switcher, only the final app counts as used: it moves to the front of the order, the Active App becomes second, and the apps passed over keep their places. The native Cmd-Tab order may still record them.
-- In the Window Switcher, windows passed over stay raised. Accessibility can only raise a window to the top, so putting them back would flash them over the window switched to.
+- Among windows, those passed over stay raised. Accessibility can only raise a window to the top, so putting them back would flash them over the window switched to.
 
 Constraints:
 
@@ -96,21 +100,20 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Launch at login. If macOS refuses or waits for approval under Login Items, Settings says so.
 - Pause, the same as in the menu, so AppSwipe can be resumed while the menu bar icon is hidden.
 - Show the menu bar icon.
-- Enable or disable each Switcher.
+- Swipe with four fingers instead of three, for example to keep three-finger drag.
 - For each Switcher, list Items from all displays or only from the display with the pointer. All displays by default.
-- Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
-- Swipe down for the Active App's windows, in place of App Exposé. Off by default.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
 - Hide Finder from the App Switcher while it has no windows. On by default.
 - Live Switching, described below. Off by default.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews; it takes effect after AppSwipe is quit and opened again. The status updates while Settings is open.
+- What the swipes do: sideways for apps, down for windows, with the finger count from the setting above.
 - Gesture conflicts, described below.
 - Diagnostics: recording touches, and showing the logs, for bug reports. The touch log keeps the last 10 MB, in two files.
 
-Options for the Window Switcher, such as hiding minimized windows, wait until it exists. There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
+There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
 
-Permissions and gesture conflicts come first, so the first launch shows what AppSwipe still needs without scrolling. The window fits short screens and can be made taller.
+Permissions come first, then the swipes and the gesture conflicts, so the first launch shows how AppSwipe works and what it still needs without scrolling. The window fits short screens and can be made taller.
 
 The first launch opens Settings.
 
@@ -118,12 +121,12 @@ The first launch opens Settings.
 
 AppSwipe detects these conflicting system settings:
 
-- three- or four-finger swipes between full-screen apps and Spaces;
+- swipes between full-screen apps and Spaces with the same fingers;
 - three-finger swipe between pages;
-- App Exposé on the swipe down, while the swipe down opens the Active App's windows;
+- App Exposé on the swipe down with the same fingers;
 - three-finger drag.
 
-A "Turn off" button rewrites the trackpad preferences and applies them without a logout. For App Exposé it turns off only App Exposé, which keeps Mission Control on the swipe up. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Removing AppSwipe does not restore them, so Settings asks to restore them first. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with whichever Switcher uses three fingers; users who keep it can swap the finger counts and turn the three-finger Switcher off.
+A "Turn off" button rewrites the trackpad preferences and applies them without a logout. For App Exposé it turns off only App Exposé, which keeps Mission Control on the swipe up. If applying fails, the button opens Trackpad settings with instructions instead. The original values are remembered, and a "Restore" button puts them back. Removing AppSwipe does not restore them, so Settings asks to restore them first. Three-finger drag lives in Accessibility settings, so AppSwipe only warns about it. It conflicts with three-finger swipes; users who keep it can swipe with four fingers.
 
 ### Language
 
@@ -150,7 +153,7 @@ The interface is in English, with a Russian localization.
 - Windows on other Spaces.
 - Actions inside a session.
 - Keyboard switching.
-- Gestures other than three- and four-finger horizontal swipes.
+- Gestures other than sideways and downward swipes with three or four fingers.
 - The App Store.
 - Notarized releases, which need a Developer ID.
 - Suppressing system gestures by swallowing Dock events.

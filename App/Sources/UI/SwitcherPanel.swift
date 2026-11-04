@@ -30,6 +30,8 @@ final class SwitcherPanel {
         static let bottomPadding: CGFloat = 10
         /// Between a Switcher and the one shown under it.
         static let stackGap: CGFloat = 12
+        /// The panel widens until titles get this much room, about 30 characters; longer ones are cut short.
+        static let minTitleWidth: CGFloat = 240
 
         private static let insetRatio: CGFloat = 0.074
         private static let gapRatio: CGFloat = 0.142
@@ -49,8 +51,11 @@ final class SwitcherPanel {
         var padding: CGFloat { (size * Self.paddingRatio).rounded() }
         var iconCornerRadius: CGFloat { size * 0.225 }
         var previewCornerRadius: CGFloat { size * 0.07 }
-        /// Corners are concentric: an icon's highlight wraps the icon, the panel wraps the highlight.
-        var panelCornerRadius: CGFloat { iconCornerRadius + inset + padding }
+        /// Corners are concentric: a highlight wraps its icon or preview, and the panel wraps the
+        /// highlight. Window previews have squarer corners than icons, so their panel does too.
+        func panelCornerRadius(windows: Bool) -> CGFloat {
+            (windows ? previewCornerRadius : iconCornerRadius) + inset + padding
+        }
 
         func contentWidth(aspect: CGFloat?) -> CGFloat {
             guard let aspect else { return size }
@@ -152,10 +157,18 @@ final class SwitcherPanel {
         row.frame = NSRect(x: 0, y: 0, width: rowWidth, height: height)
 
         let bottom = Metrics.bottomPadding + Metrics.titleBaseline
-        let size = NSSize(width: visibleRowWidth + 2 * edge, height: metrics.padding + height + bottom)
-        scrollView.frame = NSRect(x: edge, y: bottom, width: visibleRowWidth, height: height)
-        glass.cornerRadius = metrics.panelCornerRadius
-        veil.layer?.cornerRadius = metrics.panelCornerRadius
+        // Titles stay within the rounded edges. The panel widens for the longest one, up to the minimum
+        // room, so its width doesn't change as the Selection moves.
+        let longestTitle = items.map { titleWidth(of: $0.title) }.max() ?? 0
+        let titleRoom = min(longestTitle, Metrics.minTitleWidth) + 2 * (metrics.padding + metrics.inset)
+        let width = min(max(visibleRowWidth + 2 * edge, titleRoom), maxWidth)
+        let size = NSSize(width: width, height: metrics.padding + height + bottom)
+        scrollView.frame = NSRect(
+            x: ((width - visibleRowWidth) / 2).rounded(), y: bottom, width: visibleRowWidth, height: height)
+        // Only the Window Switcher can be empty, when it shows "No windows".
+        let cornerRadius = metrics.panelCornerRadius(windows: items.isEmpty || items.contains { $0.aspect != nil })
+        glass.cornerRadius = cornerRadius
+        veil.layer?.cornerRadius = cornerRadius
         let frame = screen.frame
         panel.setFrame(
             NSRect(x: frame.midX - size.width / 2, y: frame.midY - size.height / 2,
@@ -201,10 +214,10 @@ final class SwitcherPanel {
         titleField.stringValue = title
         // Center the title under the selected Item, with its baseline at a fixed distance from the
         // bottom edge. Like the native switcher, a title wider than the end Item shifts inwards, to stay
-        // within the outer edges of the end Items' content.
+        // within the outer edges of the end Items' content, and one wider than that is cut short.
         let size = titleField.intrinsicContentSize
-        let width = min(size.width + 8, scrollView.frame.width)
         let bounds = content.bounds.insetBy(dx: metrics.padding + metrics.inset, dy: 0)
+        let width = min(titleWidth(of: title), bounds.width)
         let x = width < bounds.width
             ? min(max(center - width / 2, bounds.minX), bounds.maxX - width)
             : bounds.midX - width / 2
@@ -213,10 +226,29 @@ final class SwitcherPanel {
         titleField.frame = NSRect(x: x, y: y, width: width, height: size.height).integral
     }
 
-    /// Moves the panel under `other`, or as far down as the display allows.
-    func place(below other: SwitcherPanel) {
+    /// The width the title field takes for `title`, with a little room on either side.
+    private func titleWidth(of title: String) -> CGFloat {
+        titleField.stringValue = title
+        return titleField.intrinsicContentSize.width + 8
+    }
+
+    /// Centres `top` and `bottom` together on the display with the pointer, `bottom` under `top`.
+    static func stack(_ top: SwitcherPanel, over bottom: SwitcherPanel) {
+        let screen = Displays.withPointer
+        let height = top.frame.height + Metrics.stackGap + bottom.frame.height
+        let maxY = min(screen.frame.midY + height / 2, screen.visibleFrame.maxY)
+        top.moveVertically(to: maxY - top.frame.height)
+        bottom.moveVertically(to: max(maxY - height, screen.visibleFrame.minY))
+    }
+
+    /// Centres the panel on the display with the pointer again, as `prepare` places it.
+    func center() {
+        moveVertically(to: Displays.withPointer.frame.midY - panel.frame.height / 2)
+    }
+
+    private func moveVertically(to y: CGFloat) {
         var frame = panel.frame
-        frame.origin.y = max(other.frame.minY - Metrics.stackGap - frame.height, Displays.withPointer.visibleFrame.minY)
+        frame.origin.y = y
         panel.setFrame(frame.integral, display: false)
     }
 

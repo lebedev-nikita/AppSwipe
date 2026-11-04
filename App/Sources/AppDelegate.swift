@@ -40,11 +40,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if preferences.isFirstLaunch { settings.show() }
         #if DEBUG
         let preview = UserDefaults.standard.integer(forKey: "PreviewSwitcher")
-        if preview > 0 { switchController.preview(.apps, selection: preview) }
+        if preview > 0 { switchController.previewApps(selection: preview) }
         let windowPreview = UserDefaults.standard.integer(forKey: "PreviewWindowSwitcher")
         if windowPreview > 0 {
             let app = UserDefaults.standard.string(forKey: "PreviewWindowsOf")
-            switchController.preview(.windows, selection: windowPreview, of: app)
+            switchController.previewWindows(selection: windowPreview, of: app)
         }
         if UserDefaults.standard.bool(forKey: "CursorProbe") { probeCursorHiding() }
         if UserDefaults.standard.bool(forKey: "ThemeTest") { switchController.themeTest() }

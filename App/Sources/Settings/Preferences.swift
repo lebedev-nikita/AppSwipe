@@ -1,7 +1,6 @@
 import AppKit
 import Observation
 import ServiceManagement
-import SwitchCore
 
 /// The user's settings, kept in UserDefaults. Switch Sessions read them as they start.
 @MainActor
@@ -11,12 +10,11 @@ final class Preferences {
 
     private enum Key {
         static let showMenuBarIcon = "ShowMenuBarIcon"
-        static let appSwitcherEnabled = "AppSwitcherEnabled"
-        static let windowSwitcherEnabled = "WindowSwitcherEnabled"
         static let appDisplays = "AppSwitcherDisplays"
         static let windowDisplays = "WindowSwitcherDisplays"
+        static let fourFingers = "FourFingers"
+        /// Four fingers for the App Switcher, from when the Window Switcher had its own swipe.
         static let swapFingerCounts = "SwapFingerCounts"
-        static let swipeDownForWindows = "SwipeDownForWindows"
         static let stepLength = "StepLength"
         static let excludedApps = "ExcludedApps"
         static let hideFinderWithoutWindows = "HideFinderWithoutWindows"
@@ -31,18 +29,12 @@ final class Preferences {
     private let defaults = UserDefaults.standard
 
     var showMenuBarIcon: Bool { didSet { defaults.set(showMenuBarIcon, forKey: Key.showMenuBarIcon) } }
-    var appSwitcherEnabled: Bool { didSet { defaults.set(appSwitcherEnabled, forKey: Key.appSwitcherEnabled) } }
-    var windowSwitcherEnabled: Bool { didSet { defaults.set(windowSwitcherEnabled, forKey: Key.windowSwitcherEnabled) } }
     /// The displays whose apps the App Switcher lists.
     var appDisplays: DisplayScope { didSet { defaults.set(appDisplays.rawValue, forKey: Key.appDisplays) } }
     /// The displays whose windows the Window Switcher lists.
     var windowDisplays: DisplayScope { didSet { defaults.set(windowDisplays.rawValue, forKey: Key.windowDisplays) } }
-    /// Four fingers for the App Switcher and three for the Window Switcher.
-    var swapFingerCounts: Bool { didSet { defaults.set(swapFingerCounts, forKey: Key.swapFingerCounts) } }
-    /// A swipe down with the App Switcher's fingers opens it on the Active App's windows.
-    var swipeDownForWindows: Bool {
-        didSet { defaults.set(swipeDownForWindows, forKey: Key.swipeDownForWindows) }
-    }
+    /// Swipes take four fingers instead of three.
+    var fourFingers: Bool { didSet { defaults.set(fourFingers, forKey: Key.fourFingers) } }
     /// Finger travel per Step, in millimetres.
     var stepLength: Double { didSet { defaults.set(stepLength, forKey: Key.stepLength) } }
     /// Bundle identifiers of apps during which swipes do nothing.
@@ -88,18 +80,13 @@ final class Preferences {
     private init() {
         defaults.register(defaults: [
             Key.showMenuBarIcon: true,
-            Key.appSwitcherEnabled: true,
-            Key.windowSwitcherEnabled: true,
             Key.stepLength: 8.0,
             Key.hideFinderWithoutWindows: true,
         ])
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
-        appSwitcherEnabled = defaults.bool(forKey: Key.appSwitcherEnabled)
-        windowSwitcherEnabled = defaults.bool(forKey: Key.windowSwitcherEnabled)
         appDisplays = defaults.string(forKey: Key.appDisplays).flatMap(DisplayScope.init) ?? .all
         windowDisplays = defaults.string(forKey: Key.windowDisplays).flatMap(DisplayScope.init) ?? .all
-        swapFingerCounts = defaults.bool(forKey: Key.swapFingerCounts)
-        swipeDownForWindows = defaults.bool(forKey: Key.swipeDownForWindows)
+        fourFingers = defaults.object(forKey: Key.fourFingers) as? Bool ?? defaults.bool(forKey: Key.swapFingerCounts)
         stepLength = defaults.double(forKey: Key.stepLength)
         excludedApps = defaults.stringArray(forKey: Key.excludedApps) ?? []
         hideFinderWithoutWindows = defaults.bool(forKey: Key.hideFinderWithoutWindows)
@@ -110,20 +97,8 @@ final class Preferences {
         defaults.set(true, forKey: Key.hasLaunched)
     }
 
-    /// Fingers that open each Switcher, given the swap setting.
-    func fingers(for kind: SwitcherKind) -> Int {
-        switch kind {
-        case .apps: swapFingerCounts ? 4 : 3
-        case .windows: swapFingerCounts ? 3 : 4
-        }
-    }
-
-    /// The Switcher a number of fingers opens, if it is enabled.
-    func switcher(forFingers fingers: Int) -> SwitcherKind? {
-        if fingers == self.fingers(for: .apps), appSwitcherEnabled { return .apps }
-        if fingers == self.fingers(for: .windows), windowSwitcherEnabled { return .windows }
-        return nil
-    }
+    /// Fingers that swipe sideways for the App Switcher and down for an app's windows.
+    var fingers: Int { fourFingers ? 4 : 3 }
 
     func isExcluded(_ app: NSRunningApplication?) -> Bool {
         guard let id = app?.bundleIdentifier else { return false }
