@@ -24,7 +24,7 @@ The Window Switcher has no swipe of its own: a swipe down shows it under the App
   - sheets, which belong to their parent window;
   - AppSwipe's own Switchers, while they show over AppSwipe's Settings.
 - Order: ordinary windows and dialogs come first, most recently used first. Panels come next, then minimized windows, which are marked as minimized.
-- Look: one row of **Window Previews** of equal height, with the selected window's title below. An untitled window shows the app's name.
+- Look: one row of **Window Previews** of equal height, with the selected window's title below. An untitled window shows the app's name. The title leaves out the app's name where it is a separate part, as in "Page - Google Chrome".
 - Commit focuses the window, un-minimizing it first if needed.
 
 ### Shared behaviour

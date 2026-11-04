@@ -458,10 +458,11 @@ final class SwitchController {
         }
         let listed = clock.now
         let icon = app.icon ?? NSImage()
+        let appName = app.localizedName ?? ""
         windowPanel.prepare(
             windows.map { window in
                 SwitcherPanel.Item(
-                    image: icon, title: window.title, isDimmed: window.isMinimized,
+                    image: icon, title: windowTitle(window.title, appName: appName), isDimmed: window.isMinimized,
                     aspect: window.frame.width / max(window.frame.height, 1), preview: previews.cached(window))
             },
             selection: -1)
