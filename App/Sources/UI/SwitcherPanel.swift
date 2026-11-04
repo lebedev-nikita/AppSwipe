@@ -198,11 +198,15 @@ final class SwitcherPanel {
             title = items.isEmpty ? String(localized: "No windows") : ""
         }
         titleField.stringValue = title
-        // Center the title under the selected Item, keeping it inside the panel, with its baseline
-        // at a fixed distance from the bottom edge.
+        // Center the title under the selected Item, with its baseline at a fixed distance from the
+        // bottom edge. Like the native switcher, a title wider than the end Item shifts inwards, to stay
+        // within the outer edges of the end Items' content.
         let size = titleField.intrinsicContentSize
         let width = min(size.width + 8, scrollView.frame.width)
-        let x = min(max(center - width / 2, scrollView.frame.minX), scrollView.frame.maxX - width)
+        let bounds = content.bounds.insetBy(dx: metrics.padding + metrics.inset, dy: 0)
+        let x = width < bounds.width
+            ? min(max(center - width / 2, bounds.minX), bounds.maxX - width)
+            : bounds.midX - width / 2
         let baseline = Metrics.bottomPadding
         let y = baseline - (size.height - titleField.firstBaselineOffsetFromTop)
         titleField.frame = NSRect(x: x, y: y, width: width, height: size.height).integral
