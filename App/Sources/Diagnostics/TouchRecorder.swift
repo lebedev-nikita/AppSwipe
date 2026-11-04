@@ -4,30 +4,50 @@ import SwitchCore
 /// Records touch frames for diagnosis and for replaying in SwitchCore tests.
 ///
 /// Every frame goes to touches.jsonl as one JSON line. Each completed gesture also gets a one-line
-/// summary in the diagnostic log.
+/// summary in the diagnostic log. Past 5 MB the file becomes touches.previous.jsonl and a new one
+/// starts, so a recording left on keeps at most 10 MB.
 @MainActor
 final class TouchRecorder {
-    private let handle: FileHandle?
+    private static let file = DiagnosticLog.directory.appending(path: "touches.jsonl")
+    private static let previousFile = DiagnosticLog.directory.appending(path: "touches.previous.jsonl")
+    private static let maxFileSize: UInt64 = 5_000_000
+
+    private var handle: FileHandle?
+    /// Bytes in the current file.
+    private var size: UInt64 = 0
     private let encoder = JSONEncoder()
     private var gesture: GestureSummary?
     private var previous: TouchFrame?
 
     init() {
-        let file = DiagnosticLog.directory.appending(path: "touches.jsonl")
         try? FileManager.default.createDirectory(at: DiagnosticLog.directory, withIntermediateDirectories: true)
-        if !FileManager.default.fileExists(atPath: file.path) {
-            FileManager.default.createFile(atPath: file.path, contents: nil)
-        }
-        handle = try? FileHandle(forWritingTo: file)
-        _ = try? handle?.seekToEnd()
+        open()
         encoder.outputFormatting = .sortedKeys
     }
 
     func record(_ frame: TouchFrame) {
         if let line = try? encoder.encode(frame) {
-            try? handle?.write(contentsOf: line + Data("\n".utf8))
+            let data = line + Data("\n".utf8)
+            try? handle?.write(contentsOf: data)
+            size += UInt64(data.count)
+            if size > Self.maxFileSize { rotate() }
         }
         summarize(frame)
+    }
+
+    private func open() {
+        if !FileManager.default.fileExists(atPath: Self.file.path) {
+            FileManager.default.createFile(atPath: Self.file.path, contents: nil)
+        }
+        handle = try? FileHandle(forWritingTo: Self.file)
+        size = (try? handle?.seekToEnd()) ?? 0
+    }
+
+    private func rotate() {
+        try? handle?.close()
+        try? FileManager.default.removeItem(at: Self.previousFile)
+        try? FileManager.default.moveItem(at: Self.file, to: Self.previousFile)
+        open()
     }
 
     private func summarize(_ frame: TouchFrame) {
