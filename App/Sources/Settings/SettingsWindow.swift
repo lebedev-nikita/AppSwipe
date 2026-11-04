@@ -20,7 +20,9 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
         self.window = window
         if !window.isVisible { previousApp = NSWorkspace.shared.frontmostApplication }
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate()
+        // The cooperative `activate()` waits for the app in front to yield, which it never does for a
+        // click on the menu bar icon, so Settings stayed behind it.
+        NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }
 
