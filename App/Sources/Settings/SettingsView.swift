@@ -131,10 +131,17 @@ struct SettingsView: View {
                 Text("App Switcher")
                 Text(fingersDescription(preferences.fingers(for: .apps)))
             }
+            Picker(selection: $preferences.appDisplays) { displayOptions } label: {
+                Text("Show apps from")
+                Text("From one display, the App Switcher lists the app in front and the apps with a window there.")
+            }
+            .disabled(!preferences.appSwitcherEnabled)
             Toggle(isOn: $preferences.windowSwitcherEnabled) {
                 Text("Window Switcher")
                 Text(fingersDescription(preferences.fingers(for: .windows)))
             }
+            Picker("Show windows from", selection: $preferences.windowDisplays) { displayOptions }
+                .disabled(!preferences.windowSwitcherEnabled)
             if !preferences.appSwitcherEnabled && !preferences.windowSwitcherEnabled {
                 Label("Both Switchers are off, so swipes do nothing.", systemImage: "exclamationmark.triangle")
             }
@@ -148,6 +155,11 @@ struct SettingsView: View {
             }
             Toggle("Hide Finder when it has no windows", isOn: $preferences.hideFinderWithoutWindows)
         }
+    }
+
+    @ViewBuilder private var displayOptions: some View {
+        Text("All displays").tag(DisplayScope.all)
+        Text("Display with the pointer").tag(DisplayScope.pointer)
     }
 
     private var stepSection: some View {

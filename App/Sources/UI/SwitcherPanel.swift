@@ -125,8 +125,7 @@ final class SwitcherPanel {
     /// Lays out `items` for the screen with the pointer, without showing the panel.
     func prepare(_ items: [Item], selection: Int) {
         self.items = items
-        let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }
-            ?? NSScreen.main ?? NSScreen.screens[0]
+        let screen = Displays.withPointer
         let maxWidth = screen.visibleFrame.width * Metrics.screenFraction
         metrics = Metrics(fitting: items.map(\.aspect), into: maxWidth)
         let height = metrics.highlightHeight

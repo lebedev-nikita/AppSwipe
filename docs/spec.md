@@ -7,6 +7,7 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 ### App Switcher (three fingers by default)
 
 - Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting, on by default, leaves out Finder while it has no windows; minimized windows and windows on other Spaces count, the desktop doesn't, and Finder stays when it is the Active App.
+- Displays: apps from all displays by default. A setting limits the list to the display with the pointer: the Active App, then the apps with a window on the Current Space of that display, which leaves out hidden apps and apps without visible windows. A window belongs to the display that shows most of it.
 - Order: most recently used first, so the Active App is the Current Item.
 - Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
 - Commit activates the app, brings all its windows forward, and unhides it if hidden. If the app has no visible window, Commit behaves like a click on its Dock icon: it restores the most recent minimized window, or lets the app open a new one.
@@ -14,6 +15,7 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 ### Window Switcher (four fingers by default)
 
 - Items: the Active App's windows on the **Current Space**. That means ordinary windows, dialogs, and panels such as tool palettes.
+- Displays: windows on all displays by default. A setting limits the list to the windows on the display with the pointer, minimized ones included by where they were before minimizing.
 - Excluded:
   - transient popups, such as menus, popovers, tooltips and autocomplete lists, because they close as soon as focus moves;
   - invisible and zero-size windows;
@@ -84,6 +86,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Pause, the same as in the menu, so AppSwipe can be resumed while the menu bar icon is hidden.
 - Show the menu bar icon.
 - Enable or disable each Switcher.
+- For each Switcher, list Items from all displays or only from the display with the pointer. All displays by default.
 - Swap finger counts: four fingers for the App Switcher, three for the Window Switcher.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.

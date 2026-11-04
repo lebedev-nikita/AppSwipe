@@ -14,6 +14,8 @@ final class SwitchController {
         let preparedAt: ContinuousClock.Instant
         /// Whether Finder was left out for having no windows.
         let hidesFinder: Bool
+        /// The displays the apps were listed from.
+        let displays: DisplayScope
     }
 
     private struct WindowContents {
@@ -121,8 +123,10 @@ final class SwitchController {
             arm(fingers)
             switch preferences.switcher(forFingers: fingers) {
             case .apps:
+                // Apps on the pointer's display depend on where the pointer and the windows are now.
                 if let contents, clock.now - contents.preparedAt < Self.appContentsLifetime,
-                   contents.hidesFinder == shouldHideFinder() {
+                   contents.hidesFinder == shouldHideFinder(), contents.displays == .all,
+                   preferences.appDisplays == .all {
                     refreshBadges(apps: contents.apps, contents: contentsCount)
                 } else {
                     prepareApps()
@@ -377,7 +381,9 @@ final class SwitchController {
     private func prepareApps() -> AppContents {
         let started = clock.now
         let hidesFinder = shouldHideFinder()
-        let apps = appOrder.apps().filter { !(hidesFinder && $0.bundleIdentifier == "com.apple.finder") }
+        let displays = preferences.appDisplays
+        var apps = appOrder.apps().filter { !(hidesFinder && $0.bundleIdentifier == "com.apple.finder") }
+        if displays == .pointer { apps = Self.onPointerDisplay(apps) }
         let paths = apps.map { $0.bundleURL.map(DockBadges.path(of:)) }
         let listed = clock.now
         appPanel.prepare(
@@ -393,9 +399,28 @@ final class SwitchController {
         #endif
         contentsCount += 1
         refreshBadges(apps: apps, contents: contentsCount)
-        let contents = AppContents(apps: apps, preparedAt: clock.now, hidesFinder: hidesFinder)
+        let contents = AppContents(apps: apps, preparedAt: clock.now, hidesFinder: hidesFinder, displays: displays)
         self.contents = contents
         return contents
+    }
+
+    /// The Active App, first in `apps`, and the apps with a window on the Current Space of the display
+    /// with the pointer. A window belongs to the display that shows most of it.
+    private static func onPointerDisplay(_ apps: [NSRunningApplication]) -> [NSRunningApplication] {
+        let display = Displays.withPointer.frame
+        let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] ?? []
+        var shown: Set<pid_t> = []
+        for window in windows where window[kCGWindowLayer as String] as? Int == 0 {
+            guard let pid = window[kCGWindowOwnerPID as String] as? pid_t,
+                  let bounds = window[kCGWindowBounds as String] as? NSDictionary,
+                  let frame = CGRect(dictionaryRepresentation: bounds),
+                  frame.width > 50, frame.height > 50,
+                  Displays.frame(showingMostOf: frame) == display
+            else { continue }
+            shown.insert(pid)
+        }
+        return apps.enumerated().filter { $0.offset == 0 || shown.contains($0.element.processIdentifier) }.map(\.element)
     }
 
     /// Lays out the Window Switcher with the Active App's windows, without showing it.
@@ -403,7 +428,11 @@ final class SwitchController {
     private func prepareWindows(of chosen: NSRunningApplication? = nil) -> WindowContents? {
         guard let app = chosen ?? appOrder.frontmost ?? NSWorkspace.shared.frontmostApplication else { return nil }
         let started = clock.now
-        let windows = windowList.windows(of: app)
+        var windows = windowList.windows(of: app)
+        if preferences.windowDisplays == .pointer {
+            let display = Displays.withPointer.frame
+            windows = windows.filter { Displays.frame(showingMostOf: $0.frame) == display }
+        }
         let listed = clock.now
         let icon = app.icon ?? NSImage()
         windowPanel.prepare(
