@@ -141,6 +141,10 @@ struct SettingsView: View {
                 Text("Swipe with four fingers")
                 Text("Instead of three, for example to keep three-finger drag.")
             }
+            Toggle(isOn: $preferences.ignorePalms) {
+                Text("Ignore a palm on the trackpad")
+                Text("Only fingers that move together count, so a resting palm doesn't block a swipe.")
+            }
             Picker(selection: $preferences.appDisplays) { displayOptions } label: {
                 Text("Show apps from")
                 Text("From one display, the App Switcher lists the app in front and the apps with a window there.")

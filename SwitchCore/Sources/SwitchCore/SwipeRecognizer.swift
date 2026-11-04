@@ -37,6 +37,11 @@ public struct SwipeRecognizer: Sendable {
         public var horizontalBias = 2.0
         /// Vertical travel during a session that makes a stroke up or down, in millimetres.
         public var strokeTravel = 6.0
+        /// Whether a palm on the trackpad is left out of the finger count. Otherwise every touch counts.
+        public var ignoresPalms = true
+        /// How far a touch must travel, as a share of the farthest one, to count as a swiping finger
+        /// when palms are ignored. A palm beside the fingers barely moves, so it falls short.
+        public var swipingShare = 1.0 / 3
 
         public init() {}
     }
@@ -44,10 +49,12 @@ public struct SwipeRecognizer: Sendable {
     private enum State {
         /// Fewer fingers than any Switcher needs.
         case idle
-        /// A usable number of fingers is down; `travel` counts from the moment this exact set landed.
-        case tracking(fingers: Set<Int>, travel: Vector)
-        /// The touch isn't a Switch Session; ignore it until every finger lifts.
-        case ignoring
+        /// Enough touches for a Switcher are down. `travel` holds each one's travel from the moment
+        /// this exact set landed.
+        case tracking(touches: Set<Int>, travel: [Int: Vector])
+        /// The swipe isn't a Switch Session, or its session is over; ignore it until `fingers` lift.
+        /// Other touches, such as a palm, may stay down.
+        case ignoring(fingers: Set<Int>)
         /// A Switch Session is open. `stroke` counts from the moment the fingers last moved sideways.
         case swiping(fingers: Set<Int>, travel: Double, stroke: Vector)
     }
@@ -55,9 +62,12 @@ public struct SwipeRecognizer: Sendable {
     private struct Vector {
         var x = 0.0
         var y = 0.0
+
+        var length: Double { (x * x + y * y).squareRoot() }
     }
 
-    private let settings: Settings
+    /// Changes apply from the next frame.
+    public var settings: Settings
     private var state = State.idle
     private var previous: [Int: Touch] = [:]
 
@@ -72,39 +82,58 @@ public struct SwipeRecognizer: Sendable {
 
         switch state {
         case .idle, .tracking:
-            guard settings.fingerCounts.contains(ids.count) else {
-                state = ids.count > settings.fingerCounts.max() ?? 0 ? .ignoring : .idle
+            // macOS recognizes a resting palm or thumb, which never helps open a Switcher.
+            let touches = Set(down.values.filter { !settings.ignoresPalms || !$0.isResting }.map(\.id))
+            guard touches.count >= settings.fingerCounts.min() ?? 0 else {
+                state = .idle
                 return nil
             }
-            guard case .tracking(let fingers, var travel) = state, fingers == ids else {
-                state = .tracking(fingers: ids, travel: Vector())
-                return .armed(fingers: ids.count)
+            guard case .tracking(let tracked, var travel) = state, tracked == touches else {
+                state = .tracking(touches: touches, travel: [:])
+                return settings.fingerCounts.contains(touches.count) ? .armed(fingers: touches.count) : nil
             }
-            let delta = movement(of: ids, to: down, surface: frame.surface)
-            travel.x += delta.x
-            travel.y += delta.y
-            if abs(travel.x) >= settings.openingTravel, abs(travel.x) >= settings.horizontalBias * abs(travel.y) {
-                state = .swiping(fingers: ids, travel: 0, stroke: Vector())
-                return .began(fingers: ids.count, direction: travel.x > 0 ? .right : .left, time: frame.time)
+            for id in touches {
+                let delta = movement(of: [id], to: down, surface: frame.surface)
+                travel[id, default: Vector()].x += delta.x
+                travel[id, default: Vector()].y += delta.y
             }
-            if abs(travel.y) >= settings.openingTravel, abs(travel.y) > abs(travel.x) {
-                guard travel.y < 0, abs(travel.y) >= settings.horizontalBias * abs(travel.x) else {
-                    state = .ignoring
-                    return nil
-                }
-                state = .swiping(fingers: ids, travel: 0, stroke: Vector())
-                return .beganDown(fingers: ids.count, time: frame.time)
+            // Only the touches that keep up with the farthest one are swiping fingers.
+            let farthest = travel.values.map(\.length).max() ?? 0
+            let share = settings.ignoresPalms ? settings.swipingShare : 0
+            let fingers = touches.filter { (travel[$0]?.length ?? 0) >= share * farthest }
+            var mean = Vector()
+            for id in fingers {
+                mean.x += travel[id]?.x ?? 0
+                mean.y += travel[id]?.y ?? 0
             }
-            state = .tracking(fingers: ids, travel: travel)
-            return nil
+            mean.x /= Double(fingers.count)
+            mean.y /= Double(fingers.count)
+            let opensSideways = abs(mean.x) >= settings.openingTravel
+                && abs(mean.x) >= settings.horizontalBias * abs(mean.y)
+            let opensVertically = abs(mean.y) >= settings.openingTravel && abs(mean.y) > abs(mean.x)
+            guard opensSideways || opensVertically else {
+                state = .tracking(touches: touches, travel: travel)
+                return nil
+            }
+            guard settings.fingerCounts.contains(fingers.count),
+                  opensSideways || (mean.y < 0 && abs(mean.y) >= settings.horizontalBias * abs(mean.x))
+            else {
+                state = .ignoring(fingers: fingers)
+                return nil
+            }
+            state = .swiping(fingers: fingers, travel: 0, stroke: Vector())
+            return opensSideways
+                ? .began(fingers: fingers.count, direction: mean.x > 0 ? .right : .left, time: frame.time)
+                : .beganDown(fingers: fingers.count, time: frame.time)
 
-        case .ignoring:
-            if ids.isEmpty { state = .idle }
+        case .ignoring(let fingers):
+            if fingers.isDisjoint(with: ids) { state = .idle }
             return nil
 
         case .swiping(let fingers, var travel, var stroke):
             guard fingers.isSubset(of: ids) else {
-                state = ids.isEmpty ? .idle : .ignoring
+                let lingering = fingers.intersection(ids)
+                state = lingering.isEmpty ? .idle : .ignoring(fingers: lingering)
                 return .ended(time: frame.time)
             }
             // Only the fingers that opened the session count, so a finger landing later doesn't move it.

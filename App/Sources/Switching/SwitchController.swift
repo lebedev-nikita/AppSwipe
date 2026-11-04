@@ -127,6 +127,7 @@ final class SwitchController {
 
     func handle(_ frame: TouchFrame) {
         if let armedFingers, frame.fingersDown.count < armedFingers { disarm() }
+        recognizer.settings.ignoresPalms = preferences.ignorePalms
         switch recognizer.handle(frame) {
         case .armed(let fingers):
             guard session == nil else { return }

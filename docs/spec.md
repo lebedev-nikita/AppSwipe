@@ -44,6 +44,7 @@ The Window Switcher has no swipe of its own: a swipe down shows it under the App
 ## Switch Session
 
 1. A session starts when exactly three fingers, or four if Settings say so, travel sideways or down past a small opening threshold. It opens the App Switcher; a swipe down also opens the Active App's windows, described below. Fingers added later are ignored, and a swipe up does nothing.
+   - A palm on the trackpad doesn't count as a finger: only touches that travel at least a third as far as the farthest one count, since a palm beside the swiping fingers barely moves. Touches macOS marks as a resting palm or thumb never count. A palm that stays down doesn't block the next swipe. Settings can count every touch instead.
 2. If the fingers start moving right, the Selection lands on the second Item. If they start moving left, it lands on the last Item, like Cmd-Shift-Tab.
 3. Each **Step** moves the Selection one Item in the direction of finger travel. Moving back moves the Selection back.
    - A Step is a fixed physical distance, 8 mm by default and adjustable in Settings, with no acceleration.
@@ -101,6 +102,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Pause, the same as in the menu, so AppSwipe can be resumed while the menu bar icon is hidden.
 - Show the menu bar icon.
 - Swipe with four fingers instead of three, for example to keep three-finger drag.
+- Ignore a palm on the trackpad, described under Switch Session. On by default.
 - For each Switcher, list Items from all displays or only from the display with the pointer. All displays by default.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.

@@ -30,12 +30,30 @@ public struct Touch: Codable, Equatable, Sendable {
     /// Position from the bottom edge of the surface, 0 to 1.
     public var y: Double
     public var phase: Phase
+    /// Whether macOS takes the touch for a resting palm or thumb rather than a finger.
+    public var isResting: Bool
 
-    public init(id: Int, x: Double, y: Double, phase: Phase) {
+    public init(id: Int, x: Double, y: Double, phase: Phase, isResting: Bool = false) {
         self.id = id
         self.x = x
         self.y = y
         self.phase = phase
+        self.isResting = isResting
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, x, y, phase
+        case isResting = "resting"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(Int.self, forKey: .id)
+        x = try container.decode(Double.self, forKey: .x)
+        y = try container.decode(Double.self, forKey: .y)
+        phase = try container.decode(Phase.self, forKey: .phase)
+        // Recordings made before the field existed have none.
+        isResting = try container.decodeIfPresent(Bool.self, forKey: .isResting) ?? false
     }
 
     public var isDown: Bool {

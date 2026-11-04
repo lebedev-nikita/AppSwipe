@@ -19,6 +19,7 @@ final class Preferences {
         static let excludedApps = "ExcludedApps"
         static let hideFinderWithoutWindows = "HideFinderWithoutWindows"
         static let liveSwitching = "LiveSwitching"
+        static let ignorePalms = "IgnorePalms"
         static let isPaused = "Paused"
         static let recordTouches = "RecordTouches"
         static let hasLaunched = "HasLaunched"
@@ -43,6 +44,8 @@ final class Preferences {
         didSet { defaults.set(hideFinderWithoutWindows, forKey: Key.hideFinderWithoutWindows) }
     }
     var liveSwitching: Bool { didSet { defaults.set(liveSwitching, forKey: Key.liveSwitching) } }
+    /// A palm on the trackpad doesn't count as a finger.
+    var ignorePalms: Bool { didSet { defaults.set(ignorePalms, forKey: Key.ignorePalms) } }
     var isPaused: Bool { didSet { defaults.set(isPaused, forKey: Key.isPaused) } }
     var recordTouches: Bool { didSet { defaults.set(recordTouches, forKey: Key.recordTouches) } }
 
@@ -82,6 +85,7 @@ final class Preferences {
             Key.showMenuBarIcon: true,
             Key.stepLength: 8.0,
             Key.hideFinderWithoutWindows: true,
+            Key.ignorePalms: true,
         ])
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
         appDisplays = defaults.string(forKey: Key.appDisplays).flatMap(DisplayScope.init) ?? .all
@@ -91,6 +95,7 @@ final class Preferences {
         excludedApps = defaults.stringArray(forKey: Key.excludedApps) ?? []
         hideFinderWithoutWindows = defaults.bool(forKey: Key.hideFinderWithoutWindows)
         liveSwitching = defaults.bool(forKey: Key.liveSwitching)
+        ignorePalms = defaults.bool(forKey: Key.ignorePalms)
         isPaused = defaults.bool(forKey: Key.isPaused)
         recordTouches = defaults.bool(forKey: Key.recordTouches)
         isFirstLaunch = !defaults.bool(forKey: Key.hasLaunched)

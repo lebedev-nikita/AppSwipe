@@ -154,6 +154,71 @@ import Testing
         #expect(!trackpad.move(dx: 6, dy: -8).contains(.swiped(.down)))
     }
 
+    @Test func twoFingersScrollingBesideAPalmDoNotOpen() {
+        var trackpad = Trackpad()
+        trackpad.land(2)
+        trackpad.palm()
+
+        #expect(trackpad.move(dx: 30) == [])
+    }
+
+    @Test func threeFingersSwipingBesideAPalmOpenAThreeFingerSession() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.palm()
+
+        #expect(trackpad.move(dx: 4) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
+    }
+
+    @Test func aPalmLiftingDuringASessionDoesNotEndIt() {
+        var trackpad = Trackpad()
+        trackpad.land(3)
+        trackpad.palm()
+        trackpad.move(dx: 4)
+
+        #expect(trackpad.liftPalm() == [])
+        #expect(trackpad.move(dx: 2).count == 1)
+    }
+
+    @Test func withPalmsCountedTwoFingersAndAPalmOpenAThreeFingerSession() {
+        var trackpad = Trackpad()
+        trackpad.recognizer.settings.ignoresPalms = false
+        trackpad.land(2)
+        trackpad.palm(resting: true)
+
+        #expect(trackpad.move(dx: 6) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
+    }
+
+    @Test func aPalmStayingDownDoesNotBlockTheNextSwipe() {
+        var trackpad = Trackpad()
+        trackpad.palm()
+        trackpad.land(3)
+        trackpad.move(dx: 4)
+        #expect(trackpad.lift(3) == [.ended(time: trackpad.time)])
+
+        trackpad.land(3)
+        #expect(trackpad.move(dx: -4) == [.began(fingers: 3, direction: .left, time: trackpad.time)])
+    }
+
+    @Test func aPalmStayingDownAfterAScrollDoesNotBlockTheNextSwipe() {
+        var trackpad = Trackpad()
+        trackpad.palm()
+        trackpad.land(2)
+        trackpad.move(dx: 30)
+        trackpad.lift(2)
+
+        trackpad.land(3)
+        #expect(trackpad.move(dx: 4) == [.began(fingers: 3, direction: .right, time: trackpad.time)])
+    }
+
+    @Test func aRestingPalmDoesNotArm() {
+        var trackpad = Trackpad()
+        trackpad.land(2)
+
+        #expect(trackpad.palm(resting: true) == [])
+        #expect(trackpad.land(1) == [.armed(fingers: 3)])
+    }
+
     @Test func recordedSwipesSplitIntoDeliberateSwipesAndQuickSwitches() throws {
         let url = try #require(Bundle.module.url(forResource: "three-finger-swipes", withExtension: "jsonl",
                                                  subdirectory: "Fixtures"))
@@ -196,7 +261,9 @@ import Testing
 private struct Trackpad {
     private(set) var time = 0.0
     private var fingers: [Touch] = []
-    private var recognizer = SwipeRecognizer()
+    /// A palm near the bottom edge, which never moves.
+    private var palmTouch: Touch?
+    var recognizer = SwipeRecognizer()
     private var nextID = 1
     private let surface = Size(width: 160, height: 100)
 
@@ -207,6 +274,20 @@ private struct Trackpad {
             fingers.append(Touch(id: nextID, x: position, y: 0.5, phase: .began))
             nextID += 1
         }
+        return send()
+    }
+
+    @discardableResult
+    mutating func palm(resting: Bool = false) -> [SwipeEvent] {
+        palmTouch = Touch(id: nextID, x: 0.2, y: 0.05, phase: .began, isResting: resting)
+        nextID += 1
+        return send()
+    }
+
+    @discardableResult
+    mutating func liftPalm() -> [SwipeEvent] {
+        palmTouch?.phase = .ended
+        defer { palmTouch = nil }
         return send()
     }
 
@@ -234,8 +315,10 @@ private struct Trackpad {
 
     private mutating func send() -> [SwipeEvent] {
         time += 0.008
-        let events = recognizer.handle(TouchFrame(time: time, surface: surface, touches: fingers))
+        let touches = fingers + (palmTouch.map { [$0] } ?? [])
+        let events = recognizer.handle(TouchFrame(time: time, surface: surface, touches: touches))
         for index in fingers.indices where fingers[index].phase == .began { fingers[index].phase = .stationary }
+        if palmTouch?.phase == .began { palmTouch?.phase = .stationary }
         return events.map { [$0] } ?? []
     }
 }
