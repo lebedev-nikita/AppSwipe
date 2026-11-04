@@ -171,11 +171,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setUpStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "hand.draw", accessibilityDescription: "AppSwipe")
+        item.button?.image = Self.statusIcon()
         let menu = NSMenu()
         menu.delegate = self
         item.menu = menu
         statusItem = item
+    }
+
+    /// The app icon's three items, as a template image.
+    private static func statusIcon() -> NSImage {
+        let image = NSImage(size: NSSize(width: 18, height: 18), flipped: false) { _ in
+            NSColor.black.set()
+            let side: CGFloat = 5, gap: CGFloat = 1.25, radius: CGFloat = 1.3
+            for index in 0..<3 {
+                let rect = NSRect(x: 0.25 + CGFloat(index) * (side + gap), y: (18 - side) / 2, width: side, height: side)
+                NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = "AppSwipe"
+        return image
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
