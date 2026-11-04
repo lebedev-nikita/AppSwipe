@@ -34,7 +34,7 @@ The Window Switcher has no swipe of its own: a swipe down shows it under the App
 - If the list has a single Item, the Switcher still opens, so the user sees that the gesture registered. With no windows at all, the Window Switcher shows a "No windows" placeholder.
 - Window Previews come from ScreenCaptureKit and may be slightly stale. A preview is captured when the Switcher opens, or the last time the window was visible, and is cached.
 - Without Screen Recording permission, each preview is replaced by the app icon and the window title.
-- The selected Item's title stays inside the glass's rounded edges. The panel widens to give titles at least 240 pt, about 30 characters, and a longer title is cut short with an ellipsis. The width follows the longest title in the list, so it doesn't change as the Selection moves.
+- The selected Item's title stays inside the glass's rounded edges. The panel widens to give titles at least the width of the widest possible Window Preview, twice its height, and a longer title is cut short with an ellipsis. The width follows the longest title in the list, so it doesn't change as the Selection moves.
 - The row of Items:
   - stays a single row;
   - shrinks the Items down to a minimum size as the list grows;
