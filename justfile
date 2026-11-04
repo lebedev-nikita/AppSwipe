@@ -56,6 +56,6 @@ cask:
     tap="$(brew --repo lebedev-nikita/tap)"
     sha="$(cut -d' ' -f1 "{{ release_zip }}.sha256")"
     sed -i '' -e 's/^  version ".*"$/  version "{{ version }}"/' -e "s/^  sha256 \".*\"$/  sha256 \"$sha\"/" \
-        "$tap/Casks/appswipe.rb"
+        "$tap/Casks/app-swipe.rb"
     git -C "$tap" commit -am "Update AppSwipe to {{ version }}"
     git -C "$tap" push

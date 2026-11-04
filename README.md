@@ -13,7 +13,7 @@ Switch apps and windows on a Mac with trackpad swipes. Swipe sideways with three
 Requires macOS 26 or later.
 
 ```sh
-brew install --cask lebedev-nikita/tap/appswipe
+brew install --cask lebedev-nikita/tap/app-swipe
 ```
 
 Releases are signed with a self-signed certificate and are not notarized by Apple. If macOS blocks AppSwipe the first time, open System Settings → Privacy & Security and click Open Anyway.
@@ -29,7 +29,7 @@ Update with:
 
 ```sh
 brew update
-brew upgrade --cask appswipe
+brew upgrade --cask app-swipe
 ```
 
 ## Use
