@@ -40,7 +40,7 @@ AppSwipe switches apps and windows with horizontal trackpad swipes. Terms in **b
 1. A session starts when exactly three or four fingers travel horizontally past a small opening threshold. The finger count at that moment fixes which Switcher opens; fingers added later are ignored.
 2. If the fingers start moving right, the Selection lands on the second Item. If they start moving left, it lands on the last Item, like Cmd-Shift-Tab.
 3. Each **Step** moves the Selection one Item in the direction of finger travel. Moving back moves the Selection back.
-   - A Step is a fixed physical distance, about 1 cm by default and adjustable in Settings, with no acceleration.
+   - A Step is a fixed physical distance, 8 mm by default and adjustable in Settings, with no acceleration.
    - The Selection stops at either end of the list instead of wrapping around.
    - Direction ignores the natural-scrolling setting.
 4. **Commit** happens as soon as the finger count drops below the count the session started with. The Selection is frozen at that moment.

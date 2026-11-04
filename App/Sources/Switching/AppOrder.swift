@@ -5,6 +5,8 @@ import AppKit
 /// macOS has no public API for the Cmd-Tab order, so the order before AppSwipe launched is a guess
 /// from the on-screen window stacking order; activations after that are tracked exactly. The list is
 /// kept current from workspace notifications, so reading it at the start of a swipe costs nothing.
+///
+/// AppSwipe itself is listed only while Settings is open and it is a regular app.
 @MainActor
 final class AppOrder {
     /// Called after the list or its order changes.
@@ -18,12 +20,13 @@ final class AppOrder {
     private var frozen = false
     private var ignoreActivationsUntil = Date.distantPast
     private var allowedActivation: pid_t?
+    private var policyObservation: NSKeyValueObservation?
 
     init() {
-        let me = ProcessInfo.processInfo.processIdentifier
-        for app in NSWorkspace.shared.runningApplications where app.processIdentifier != me {
+        for app in NSWorkspace.shared.runningApplications {
             running[app.processIdentifier] = app
         }
+        running[Self.me.processIdentifier] = Self.me
         order = Self.initialOrder()
         observe(NSWorkspace.didLaunchApplicationNotification) { order, app in
             order.running[app.processIdentifier] = app
@@ -37,7 +40,17 @@ final class AppOrder {
             order.running[app.processIdentifier] = nil
             order.order.removeAll { $0 == app.processIdentifier }
         }
+        // Settings opening or closing adds AppSwipe to the list or takes it out.
+        policyObservation = Self.me.observe(\.activationPolicy) { [weak self] _, _ in
+            Task { @MainActor in
+                guard let self else { return }
+                if Self.me.activationPolicy != .regular { self.order.removeAll { $0 == Self.me.processIdentifier } }
+                self.onChange()
+            }
+        }
     }
+
+    private static let me = NSRunningApplication.current
 
     /// The most recently activated app, which is the frontmost one outside Live Switching.
     var frontmost: NSRunningApplication? {
@@ -84,8 +97,10 @@ final class AppOrder {
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
             else { return }
             MainActor.assumeIsolated {
-                guard let self, app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
-                update(self, app)
+                // AppSwipe activates for its own panels too; only Settings, which makes it regular, counts.
+                guard let self, app.processIdentifier != Self.me.processIdentifier || Self.me.activationPolicy == .regular
+                else { return }
+                update(self, Self.me.processIdentifier == app.processIdentifier ? Self.me : app)
                 self.onChange()
             }
         })
