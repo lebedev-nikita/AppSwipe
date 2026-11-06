@@ -108,6 +108,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
 - Hide Finder from the App Switcher while it has no windows. On by default.
 - Live Switching, described below. Off by default.
+- Enlarge the selection: the selected Item grows over the space its highlight would take, and has no highlight. Window Previews grow evenly until they meet that space's edge on one side. Off by default.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews; it takes effect after AppSwipe is quit and opened again. The status updates while Settings is open.
 - What the swipes do: sideways for apps, down for windows, with the finger count from the setting above.
 - Gesture conflicts, described below.

@@ -154,6 +154,10 @@ struct SettingsView: View {
                 Text("Live Switching")
                 Text("Switch the moment the selection moves, without waiting for the fingers to lift.")
             }
+            Toggle(isOn: $preferences.enlargeSelection) {
+                Text("Enlarge the selection")
+                Text("The selected item grows instead of getting a highlight around it.")
+            }
             Toggle("Hide Finder when it has no windows", isOn: $preferences.hideFinderWithoutWindows)
         } header: {
             Text("Switchers")

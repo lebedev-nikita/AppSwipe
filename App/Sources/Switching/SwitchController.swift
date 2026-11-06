@@ -495,6 +495,8 @@ final class SwitchController {
         let selection = direction.map {
             SwitchSession(itemCount: targets.count, direction: $0, began: time, settings: sessionSettings)
         } ?? SwitchSession(onCurrentItemOf: targets.count, settings: sessionSettings)
+        appPanel.enlargesSelection = preferences.enlargeSelection
+        windowPanel.enlargesSelection = preferences.enlargeSelection
         panel.select(selection.selection)
         panel.show()
         // Usually already frozen where the fingers landed.

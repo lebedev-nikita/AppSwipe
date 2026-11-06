@@ -96,6 +96,12 @@ final class SwitcherPanel {
     private var itemViews: [ItemView] = []
     private var metrics = Metrics(fitting: [nil], into: 1000)
 
+    /// Shows the Selection by enlarging its Item over the space its highlight would take, without the
+    /// highlight.
+    var enlargesSelection = false {
+        didSet { itemViews.forEach { $0.enlargesSelection = enlargesSelection } }
+    }
+
     init() {
         panel = NSPanel(
             contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -148,6 +154,7 @@ final class SwitcherPanel {
             view.badge = item.badge
             view.isDimmed = item.isDimmed
             view.preview = item.preview
+            view.enlargesSelection = enlargesSelection
             let width = metrics.itemWidth(aspect: item.aspect)
             view.frame = NSRect(x: x, y: 0, width: width, height: height)
             x += width
@@ -295,6 +302,12 @@ private final class ItemView: NSView {
         didSet { if isSelected != oldValue { updateSelection() } }
     }
 
+    var enlargesSelection = false {
+        didSet { if enlargesSelection != oldValue { updateSelection() } }
+    }
+
+    private var isEnlarged: Bool { isSelected && enlargesSelection }
+
     var isDimmed = false {
         didSet { imageView.alphaValue = isDimmed ? 0.45 : 1 }
     }
@@ -336,10 +349,14 @@ private final class ItemView: NSView {
 
     override func layout() {
         super.layout()
-        let size = metrics.size
         let width = metrics.contentWidth(aspect: aspect)
-        let content = NSRect(x: (bounds.width - width) / 2, y: (bounds.height - size) / 2, width: width, height: size)
-        highlightView.frame = content.insetBy(dx: -metrics.inset, dy: -metrics.inset)
+        let normal = NSRect(
+            x: (bounds.width - width) / 2, y: (bounds.height - metrics.size) / 2, width: width, height: metrics.size)
+        highlightView.frame = normal.insetBy(dx: -metrics.inset, dy: -metrics.inset)
+        // Enlarged, the content grows evenly until it meets the highlight's edge on one side.
+        let scale = isEnlarged ? min(highlightView.frame.width / width, highlightView.frame.height / metrics.size) : 1
+        let content = normal.insetBy(dx: width * (1 - scale) / 2, dy: metrics.size * (1 - scale) / 2)
+        let size = content.height
         if aspect != nil {
             let side = preview == nil ? (size * Self.placeholderFraction).rounded() : 0
             imageView.frame = preview == nil
@@ -361,7 +378,8 @@ private final class ItemView: NSView {
     }
 
     private func updateSelection() {
-        highlightView.isHidden = !isSelected
+        needsLayout = true
+        highlightView.isHidden = !isSelected || enlargesSelection
         guard isSelected else { return }
         let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         highlightView.layer?.backgroundColor =

@@ -101,6 +101,16 @@
         }
       }
     },
+    "Enlarge the selection": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увеличивать выбранный элемент"
+          }
+        }
+      }
+    },
     "Excluded Apps": {
       "localizations": {
         "ru": {
@@ -627,6 +637,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переключатели"
+          }
+        }
+      }
+    },
+    "The selected item grows instead of getting a highlight around it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбранный элемент становится крупнее вместо подсветки вокруг него."
           }
         }
       }
