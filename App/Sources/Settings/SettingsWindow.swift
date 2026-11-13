@@ -10,6 +10,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
     let trial = StepTrial()
     private let conflicts = TrackpadConflicts()
     private var window: NSWindow?
+    private var controller: NSHostingController<SettingsView>?
     /// The app in front before Settings opened, which gets the focus back when Settings closes.
     private var previousApp: NSRunningApplication?
 
@@ -18,7 +19,10 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
     func show() {
         let window = self.window ?? makeWindow()
         self.window = window
-        if !window.isVisible { previousApp = NSWorkspace.shared.frontmostApplication }
+        if !window.isVisible {
+            previousApp = NSWorkspace.shared.frontmostApplication
+            controller?.rootView = view()
+        }
         NSApp.setActivationPolicy(.regular)
         // The cooperative `activate()` waits for the app in front to yield, which it never does for a
         // click on the menu bar icon, so Settings stayed behind it.
@@ -33,8 +37,8 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
     }
 
     private func makeWindow() -> NSWindow {
-        let controller = NSHostingController(
-            rootView: SettingsView(preferences: .shared, conflicts: conflicts, trial: trial))
+        let controller = NSHostingController(rootView: view())
+        self.controller = controller
         controller.sizingOptions = [.minSize, .maxSize]
         let window = NSWindow(contentViewController: controller)
         window.title = String(localized: "AppSwipe Settings")
@@ -43,6 +47,15 @@ final class SettingsWindow: NSObject, NSWindowDelegate {
         window.delegate = self
         fit(window)
         return window
+    }
+
+    private func view() -> SettingsView {
+        let preferences = Preferences.shared
+        conflicts.refresh(fingers: preferences.fingers)
+        let attention = Attention(
+            permissions: !Permissions.hasAccessibility,
+            trackpad: !Permissions.hasAccessibility || preferences.isFirstLaunch || !conflicts.conflicts.isEmpty)
+        return SettingsView(preferences: preferences, conflicts: conflicts, trial: trial, attention: attention)
     }
 
     /// Sizes the window to fit the screen it opens on, which may be shorter than the usual height.

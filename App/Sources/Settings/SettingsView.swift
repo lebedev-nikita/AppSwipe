@@ -7,18 +7,25 @@ struct SettingsView: View {
     @Bindable var preferences: Preferences
     let conflicts: TrackpadConflicts
     let trial: StepTrial
+    /// Sections needing action go first, the rest where they usually are. Decided when the window opens,
+    /// so granting a permission or turning off a gesture doesn't move a section away under the pointer.
+    let attention: Attention
     @State private var permissions = PermissionState()
     @State private var runningApps = RunningApp.all()
 
     var body: some View {
-        // What AppSwipe needs to work comes first, so the first launch shows it without scrolling.
+        // What is changed most comes first, then how swipes are read, then what rarely needs a look.
+        // What AppSwipe still needs jumps ahead, so the first launch shows it without scrolling.
         Form {
-            permissionsSection
-            gesturesSection
+            if attention.permissions { permissionsSection }
+            if attention.trackpad { trackpadSection }
             generalSection
-            switchersSection
-            stepSection
+            appSwitcherSection
+            windowSwitcherSection
+            switchingSection
+            if !attention.trackpad { trackpadSection }
             excludedAppsSection
+            if !attention.permissions { permissionsSection }
             diagnosticsSection
         }
         .formStyle(.grouped)
@@ -65,10 +72,10 @@ struct SettingsView: View {
         }
     }
 
-    /// What the swipes do, then the macOS gestures that take them.
-    @ViewBuilder private var gesturesSection: some View {
+    /// What the swipes do, the macOS gestures that take them, and how the swipes are read.
+    @ViewBuilder private var trackpadSection: some View {
         let fingers = preferences.fingers
-        Section("Trackpad Gestures") {
+        Section {
             GestureRow(
                 symbol: "arrow.left.and.right",
                 title: fingers == 3 ? "Swipe sideways with three fingers" : "Swipe sideways with four fingers",
@@ -77,8 +84,6 @@ struct SettingsView: View {
                 symbol: "arrow.down",
                 title: fingers == 3 ? "Swipe down with three fingers" : "Swipe down with four fingers",
                 detail: "Steps through the windows of the app in front. While switching apps, shows the selected app’s windows; swipe up to go back.")
-        }
-        Section {
             if conflicts.conflicts.isEmpty {
                 Label("No trackpad gestures conflict with AppSwipe.", systemImage: "checkmark.circle")
                     .foregroundStyle(.secondary)
@@ -93,6 +98,22 @@ struct SettingsView: View {
                     VStack(alignment: .leading) { gestureButtons }
                 }
             }
+            Toggle("Swipe with four fingers", isOn: $preferences.fourFingers)
+            Toggle("Ignore a palm on the trackpad", isOn: $preferences.ignorePalms)
+            LabeledContent {
+                HStack {
+                    Slider(value: $preferences.stepLength, in: Preferences.stepLengths, step: 1)
+                    Text("\(Int(preferences.stepLength)) mm")
+                        .monospacedDigit()
+                        .frame(width: 44, alignment: .trailing)
+                }
+            } label: {
+                Text("Step length")
+                Text("How far the fingers travel to move the selection by one item.")
+            }
+            StepTrialStrip(trial: trial)
+        } header: {
+            Text("Trackpad")
         } footer: {
             VStack(alignment: .leading, spacing: 4) {
                 Text("macOS gestures that use the same swipes take them before AppSwipe can.")
@@ -124,43 +145,23 @@ struct SettingsView: View {
             if preferences.launchAtLoginNeedsApproval {
                 Button("Open Login Items Settings") { SMAppService.openSystemSettingsLoginItems() }
             }
-            Toggle(isOn: $preferences.isPaused) {
-                Text("Pause AppSwipe")
-                Text("Swipes do nothing until AppSwipe is resumed.")
-            }
+            Toggle("Pause AppSwipe", isOn: $preferences.isPaused)
             Toggle(isOn: $preferences.showMenuBarIcon) {
                 Text("Show icon in the menu bar")
-                Text("When hidden, open AppSwipe again to see these settings, and press ⌘Q here to quit it.")
+                Text("When hidden, open AppSwipe again to see these settings.")
             }
         }
     }
 
-    private var switchersSection: some View {
-        Section {
-            Toggle(isOn: $preferences.fourFingers) {
-                Text("Swipe with four fingers")
-                Text("Instead of three, for example to keep three-finger drag.")
-            }
-            Toggle(isOn: $preferences.ignorePalms) {
-                Text("Ignore a palm on the trackpad")
-                Text("Only fingers that move together count, so a resting palm doesn't block a swipe.")
-            }
+    private var appSwitcherSection: some View {
+        Section("App Switcher") {
             Picker(selection: $preferences.appDisplays) { displayOptions } label: {
                 Text("Show apps from")
                 Text("From one display, the App Switcher lists the app in front and the apps with a window there.")
             }
-            Picker("Show windows from", selection: $preferences.windowDisplays) { displayOptions }
-            Toggle(isOn: $preferences.liveSwitching) {
-                Text("Live Switching")
-                Text("Switch the moment the selection moves, without waiting for the fingers to lift.")
-            }
-            Toggle(isOn: $preferences.enlargeSelection) {
-                Text("Enlarge the selection")
-                Text("The selected item grows instead of getting a highlight around it.")
-            }
             Toggle(isOn: $preferences.hideAppsWithoutWindows) {
                 Text("Hide apps without windows")
-                Text("Minimized windows and windows on other Spaces count. The app in front always shows.")
+                Text("Minimized windows and windows on other Spaces count.")
             }
             Toggle(isOn: Binding(
                 get: { preferences.hideAppsWithoutWindows || preferences.hideFinderWithoutWindows },
@@ -172,8 +173,25 @@ struct SettingsView: View {
                 }
             }
             .disabled(preferences.hideAppsWithoutWindows)
-        } header: {
-            Text("Switchers")
+        }
+    }
+
+    private var windowSwitcherSection: some View {
+        Section("Window Switcher") {
+            Picker("Show windows from", selection: $preferences.windowDisplays) { displayOptions }
+        }
+    }
+
+    private var switchingSection: some View {
+        Section("Switching") {
+            Toggle(isOn: $preferences.liveSwitching) {
+                Text("Live Switching")
+                Text("Switch the moment the selection moves, without waiting for the fingers to lift.")
+            }
+            Toggle(isOn: $preferences.enlargeSelection) {
+                Text("Enlarge the selection")
+                Text("Instead of a highlight around it.")
+            }
         }
     }
 
@@ -182,34 +200,8 @@ struct SettingsView: View {
         Text("Display with the pointer").tag(DisplayScope.pointer)
     }
 
-    private var stepSection: some View {
-        Section {
-            LabeledContent("Step length") {
-                HStack {
-                    Slider(value: $preferences.stepLength, in: Preferences.stepLengths, step: 1)
-                    Text("\(Int(preferences.stepLength)) mm")
-                        .monospacedDigit()
-                        .frame(width: 44, alignment: .trailing)
-                }
-            }
-            if !conflicts.conflicts.isEmpty {
-                Label(
-                    "Turn off the conflicting trackpad gestures above first, or macOS takes the swipe.",
-                    systemImage: "exclamationmark.triangle")
-            }
-            StepTrialStrip(trial: trial)
-        } header: {
-            Text("Step")
-        } footer: {
-            Text("How far the fingers travel to move the selection by one item.")
-        }
-    }
-
     private var excludedAppsSection: some View {
         Section {
-            if preferences.excludedApps.isEmpty {
-                Text("No excluded apps").foregroundStyle(.secondary)
-            }
             ForEach(preferences.excludedApps, id: \.self) { id in
                 HStack {
                     AppLabel(bundleID: id)
@@ -218,26 +210,37 @@ struct SettingsView: View {
                         .buttonStyle(.borderless)
                 }
             }
-            Menu("Add App") {
-                let candidates = runningApps.filter { !preferences.excludedApps.contains($0.bundleID) }
-                ForEach(candidates) { app in
-                    Button { preferences.excludedApps.append(app.bundleID) } label: {
-                        Label {
-                            Text(verbatim: app.name)
-                        } icon: {
-                            Image(nsImage: app.icon)
-                        }
-                    }
+            LabeledContent {
+                addAppMenu
+            } label: {
+                if preferences.excludedApps.isEmpty {
+                    Text("No excluded apps").foregroundStyle(.secondary)
                 }
-                if !candidates.isEmpty { Divider() }
-                Button("Other App…", action: addExcludedApp)
             }
-            .fixedSize()
         } header: {
             Text("Excluded Apps")
         } footer: {
             Text("Swipes do nothing while one of these apps is in front, for games and apps with their own gestures.")
         }
+    }
+
+    private var addAppMenu: some View {
+        Menu("Add App") {
+            let candidates = runningApps.filter { !preferences.excludedApps.contains($0.bundleID) }
+            ForEach(candidates) { app in
+                Button { preferences.excludedApps.append(app.bundleID) } label: {
+                    Label {
+                        Text(verbatim: app.name)
+                    } icon: {
+                        Image(nsImage: app.icon)
+                    }
+                }
+            }
+            if !candidates.isEmpty { Divider() }
+            Button("Other App…", action: addExcludedApp)
+        }
+        .menuStyle(.button)
+        .fixedSize()
     }
 
     private var diagnosticsSection: some View {
@@ -246,8 +249,10 @@ struct SettingsView: View {
                 Text("Record touches")
                 Text("Writes every trackpad touch to a log, for bug reports. The log keeps the last 10 MB.")
             }
-            Button("Show Logs in Finder") {
-                NSWorkspace.shared.activateFileViewerSelecting([DiagnosticLog.directory])
+            LabeledContent("Logs") {
+                Button("Show in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([DiagnosticLog.directory])
+                }
             }
         }
     }
@@ -300,6 +305,14 @@ struct SettingsView: View {
         NSWorkspace.shared.open(
             URL(string: "x-apple.systempreferences:com.apple.Accessibility-Settings.extension?Pointer")!)
     }
+}
+
+/// Which sections need action and go first.
+struct Attention {
+    /// Accessibility is missing.
+    var permissions: Bool
+    /// The first launch, which shows what the swipes do, or a macOS gesture takes the swipes.
+    var trackpad: Bool
 }
 
 private struct PermissionState: Equatable {
@@ -356,7 +369,11 @@ private struct PermissionRow: View {
     var body: some View {
         LabeledContent {
             if isGranted {
-                Label("Granted", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                Label {
+                    Text("Granted").foregroundStyle(.secondary)
+                } icon: {
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                }
             } else {
                 Button("Open System Settings", action: open)
             }

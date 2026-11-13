@@ -61,6 +61,16 @@
         }
       }
     },
+    "App Switcher": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключатель приложений"
+          }
+        }
+      }
+    },
     "AppSwipe Settings": {
       "localizations": {
         "ru": {
@@ -161,22 +171,22 @@
         }
       }
     },
-    "Hide apps without windows": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скрывать приложения без окон"
-          }
-        }
-      }
-    },
     "Hide Finder when it has no windows": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Скрывать Finder, когда у него нет окон"
+          }
+        }
+      }
+    },
+    "Hide apps without windows": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывать приложения без окон"
           }
         }
       }
@@ -201,12 +211,12 @@
         }
       }
     },
-    "Instead of three, for example to keep three-finger drag.": {
+    "Instead of a highlight around it.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вместо трёх, например чтобы оставить перетаскивание тремя пальцами."
+            "value": "Вместо рамки вокруг него."
           }
         }
       }
@@ -231,6 +241,16 @@
         }
       }
     },
+    "Logs": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Логи"
+          }
+        }
+      }
+    },
     "Minimize": {
       "localizations": {
         "ru": {
@@ -241,12 +261,12 @@
         }
       }
     },
-    "Minimized windows and windows on other Spaces count. The app in front always shows.": {
+    "Minimized windows and windows on other Spaces count.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Свёрнутые окна и окна на других рабочих столах учитываются. Активное приложение показывается всегда."
+            "value": "Свёрнутые окна и окна на других рабочих столах учитываются."
           }
         }
       }
@@ -277,16 +297,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет окон"
-          }
-        }
-      }
-    },
-    "Only fingers that move together count, so a resting palm doesn't block a swipe.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Считаются только пальцы, которые движутся вместе, поэтому лежащая ладонь не мешает свайпу."
           }
         }
       }
@@ -441,16 +451,6 @@
         }
       }
     },
-    "Show Logs in Finder": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Показать логи в Finder"
-          }
-        }
-      }
-    },
     "Show apps from": {
       "localizations": {
         "ru": {
@@ -471,22 +471,22 @@
         }
       }
     },
+    "Show in Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать в Finder"
+          }
+        }
+      }
+    },
     "Show windows from": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Показывать окна"
-          }
-        }
-      }
-    },
-    "Step": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Шаг"
           }
         }
       }
@@ -581,16 +581,6 @@
         }
       }
     },
-    "Swipes do nothing until AppSwipe is resumed.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Свайпы ничего не делают, пока AppSwipe не возобновят."
-          }
-        }
-      }
-    },
     "Swipes do nothing while one of these apps is in front, for games and apps with their own gestures.": {
       "localizations": {
         "ru": {
@@ -661,22 +651,12 @@
         }
       }
     },
-    "Switchers": {
+    "Switching": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Переключатели"
-          }
-        }
-      }
-    },
-    "The selected item grows instead of getting a highlight around it.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Выбранный элемент становится крупнее вместо подсветки вокруг него."
+            "value": "Переключение"
           }
         }
       }
@@ -691,12 +671,12 @@
         }
       }
     },
-    "Trackpad Gestures": {
+    "Trackpad": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Жесты трекпада"
+            "value": "Трекпад"
           }
         }
       }
@@ -711,16 +691,6 @@
         }
       }
     },
-    "Turn off the conflicting trackpad gestures above first, or macOS takes the swipe.": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сначала отключите мешающие жесты трекпада выше, иначе свайп перехватит macOS."
-          }
-        }
-      }
-    },
     "Turning them off changes them for the whole Mac. Restore them here before removing AppSwipe.": {
       "localizations": {
         "ru": {
@@ -731,12 +701,12 @@
         }
       }
     },
-    "When hidden, open AppSwipe again to see these settings, and press ⌘Q here to quit it.": {
+    "When hidden, open AppSwipe again to see these settings.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Если значок скрыт, откройте AppSwipe ещё раз, чтобы увидеть эти настройки, а чтобы завершить его, нажмите здесь ⌘Q."
+            "value": "Если значок скрыт, откройте AppSwipe ещё раз, чтобы увидеть эти настройки."
           }
         }
       }
@@ -747,6 +717,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Окно"
+          }
+        }
+      }
+    },
+    "Window Switcher": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переключатель окон"
           }
         }
       }

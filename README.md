@@ -41,8 +41,6 @@ brew upgrade --cask app-swipe
 
 Settings open from the menu bar icon, or by opening AppSwipe again while the icon is hidden. While they are open, ⌘W closes them and ⌘Q quits AppSwipe. They can pause AppSwipe, switch to four-finger swipes, stop ignoring a palm resting on the trackpad, limit each switcher to the display with the pointer, switch the moment the selection moves, change the step length, and turn AppSwipe off in apps with their own gestures.
 
-![Settings](docs/images/settings.png)
-
 ## Build from source
 
 Requires Xcode 27, [mise](https://mise.jdx.dev) and [Just](https://just.systems).

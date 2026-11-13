@@ -117,7 +117,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 
 There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
 
-Permissions come first, then the swipes and the gesture conflicts, so the first launch shows how AppSwipe works and what it still needs without scrolling. The window fits short screens and can be made taller.
+Sections go in the order they are needed: General, App Switcher, Window Switcher, Switching (Live Switching and the enlarged selection), Trackpad (the swipes, gesture conflicts, finger count, palms and step length), Excluded Apps, Permissions, Diagnostics. A section needing action goes first: Permissions while Accessibility is missing, and Trackpad then, on the first launch, and while a macOS gesture takes the swipes. So the first launch shows how AppSwipe works and what it still needs without scrolling. The order is decided when the window opens, so granting a permission or turning off a gesture doesn't move a section while Settings is open.
 
 The first launch opens Settings.
 
