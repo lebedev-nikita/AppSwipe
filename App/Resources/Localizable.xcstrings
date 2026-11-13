@@ -51,6 +51,16 @@
         }
       }
     },
+    "Already hidden along with other apps without windows.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уже скрывается вместе с другими приложениями без окон."
+          }
+        }
+      }
+    },
     "AppSwipe Settings": {
       "localizations": {
         "ru": {
@@ -151,6 +161,16 @@
         }
       }
     },
+    "Hide apps without windows": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывать приложения без окон"
+          }
+        }
+      }
+    },
     "Hide Finder when it has no windows": {
       "localizations": {
         "ru": {
@@ -217,6 +237,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Свернуть"
+          }
+        }
+      }
+    },
+    "Minimized windows and windows on other Spaces count. The app in front always shows.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Свёрнутые окна и окна на других рабочих столах учитываются. Активное приложение показывается всегда."
           }
         }
       }

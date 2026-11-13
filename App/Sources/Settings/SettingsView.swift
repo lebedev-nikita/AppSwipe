@@ -158,7 +158,20 @@ struct SettingsView: View {
                 Text("Enlarge the selection")
                 Text("The selected item grows instead of getting a highlight around it.")
             }
-            Toggle("Hide Finder when it has no windows", isOn: $preferences.hideFinderWithoutWindows)
+            Toggle(isOn: $preferences.hideAppsWithoutWindows) {
+                Text("Hide apps without windows")
+                Text("Minimized windows and windows on other Spaces count. The app in front always shows.")
+            }
+            Toggle(isOn: Binding(
+                get: { preferences.hideAppsWithoutWindows || preferences.hideFinderWithoutWindows },
+                set: { preferences.hideFinderWithoutWindows = $0 }
+            )) {
+                Text("Hide Finder when it has no windows")
+                if preferences.hideAppsWithoutWindows {
+                    Text("Already hidden along with other apps without windows.")
+                }
+            }
+            .disabled(preferences.hideAppsWithoutWindows)
         } header: {
             Text("Switchers")
         }

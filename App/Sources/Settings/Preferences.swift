@@ -17,6 +17,7 @@ final class Preferences {
         static let swapFingerCounts = "SwapFingerCounts"
         static let stepLength = "StepLength"
         static let excludedApps = "ExcludedApps"
+        static let hideAppsWithoutWindows = "HideAppsWithoutWindows"
         static let hideFinderWithoutWindows = "HideFinderWithoutWindows"
         static let liveSwitching = "LiveSwitching"
         static let enlargeSelection = "EnlargeSelection"
@@ -41,6 +42,12 @@ final class Preferences {
     var stepLength: Double { didSet { defaults.set(stepLength, forKey: Key.stepLength) } }
     /// Bundle identifiers of apps during which swipes do nothing.
     var excludedApps: [String] { didSet { defaults.set(excludedApps, forKey: Key.excludedApps) } }
+    /// The App Switcher leaves out apps without windows, other than the Active App.
+    var hideAppsWithoutWindows: Bool {
+        didSet { defaults.set(hideAppsWithoutWindows, forKey: Key.hideAppsWithoutWindows) }
+    }
+    /// The App Switcher leaves out Finder without windows, unless it is the Active App. Only matters
+    /// while apps without windows are shown.
     var hideFinderWithoutWindows: Bool {
         didSet { defaults.set(hideFinderWithoutWindows, forKey: Key.hideFinderWithoutWindows) }
     }
@@ -87,7 +94,6 @@ final class Preferences {
         defaults.register(defaults: [
             Key.showMenuBarIcon: true,
             Key.stepLength: 8.0,
-            Key.hideFinderWithoutWindows: true,
             Key.ignorePalms: true,
         ])
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
@@ -96,6 +102,10 @@ final class Preferences {
         fourFingers = defaults.object(forKey: Key.fourFingers) as? Bool ?? defaults.bool(forKey: Key.swapFingerCounts)
         stepLength = defaults.double(forKey: Key.stepLength)
         excludedApps = defaults.stringArray(forKey: Key.excludedApps) ?? []
+        // Before apps without windows could be hidden, Finder alone was, unless turned off. Turned off,
+        // everything stays shown.
+        hideAppsWithoutWindows = defaults.object(forKey: Key.hideAppsWithoutWindows) as? Bool
+            ?? defaults.object(forKey: Key.hideFinderWithoutWindows) as? Bool ?? true
         hideFinderWithoutWindows = defaults.bool(forKey: Key.hideFinderWithoutWindows)
         liveSwitching = defaults.bool(forKey: Key.liveSwitching)
         enlargeSelection = defaults.bool(forKey: Key.enlargeSelection)
