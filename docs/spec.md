@@ -6,7 +6,7 @@ AppSwipe switches apps and windows with trackpad swipes: sideways for apps, down
 
 ### App Switcher
 
-- Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting, on by default, leaves out Finder while it has no windows; minimized windows and windows on other Spaces count, the desktop doesn't, and Finder stays when it is the Active App.
+- Items: every running app with a Dock icon, including hidden apps, apps whose windows are all minimized, and apps without windows. Menu-bar-only agents are excluded. A setting, on by default, leaves out apps while they have no windows; minimized windows and windows on other Spaces count, the desktop and windows an app closed but keeps hidden don't, and the Active App always stays. Telling a window on another Space from a hidden one takes a slow check in the background, so until it is done the app stays. With it off, another setting, off by default, leaves out just Finder the same way.
 - Displays: apps from all displays by default. A setting limits the list to the display with the pointer: the Active App, then the apps with a window on the Current Space of that display, which leaves out hidden apps and apps without visible windows. A window belongs to the display that shows most of it.
 - Order: most recently used first, so the Active App is the Current Item.
 - Look: one row of app icons, with the selected app's name below. Icons carry the same badges as in the Dock, such as unread counts.
@@ -106,7 +106,8 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 - For each Switcher, list Items from all displays or only from the display with the pointer. All displays by default.
 - Step length, with a strip to try it on: swiping across it shows how many Steps the travel makes.
 - Excluded apps, added from the running apps or with an open panel. While one of them is frontmost, swipes do nothing, for games and apps with their own three- and four-finger gestures.
-- Hide Finder from the App Switcher while it has no windows. On by default.
+- Hide apps from the App Switcher while they have no windows. On by default.
+- Hide Finder from the App Switcher while it has no windows. Off by default. While apps without windows are hidden, it is shown on and can't be changed, since Finder is hidden with them.
 - Live Switching, described below. Off by default.
 - Enlarge the selection: the selected Item grows over the space its highlight would take, and has no highlight. Window Previews grow evenly until they meet that space's edge on one side. Off by default.
 - Permission status, with buttons that open the matching pane of System Settings. Accessibility is required. Screen Recording is optional and only needed for Window Previews; it takes effect after AppSwipe is quit and opened again. The status updates while Settings is open.
@@ -116,7 +117,7 @@ Settings stay few on purpose. The opening travel, the Quick Switch window and th
 
 There is no haptic feedback, no acceleration and no keyboard shortcut to configure.
 
-Permissions come first, then the swipes and the gesture conflicts, so the first launch shows how AppSwipe works and what it still needs without scrolling. The window fits short screens and can be made taller.
+Sections go in the order they are needed: General, App Switcher, Window Switcher, Switching (Live Switching and the enlarged selection), Trackpad (the swipes, gesture conflicts, finger count, palms and step length), Excluded Apps, Permissions, Diagnostics. A section needing action goes first: Permissions while Accessibility is missing, and Trackpad then, on the first launch, and while a macOS gesture takes the swipes. So the first launch shows how AppSwipe works and what it still needs without scrolling. The order is decided when the window opens, so granting a permission or turning off a gesture doesn't move a section while Settings is open.
 
 The first launch opens Settings.
 

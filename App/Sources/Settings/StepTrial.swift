@@ -34,7 +34,7 @@ struct StepTrialStrip: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: 56)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .background(.quinary, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .background(AreaReader(trial: trial))
         .overlay(alignment: .bottom) {
             Text(trial.selection == nil ? LocalizedStringKey("Swipe here with three or four fingers") : "")
