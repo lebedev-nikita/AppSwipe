@@ -1,7 +1,7 @@
 import ApplicationServices
 import Darwin
 
-/// Whether an app has a window on any Space, read through Accessibility.
+/// Which windows an app has on any Space, read through Accessibility.
 ///
 /// Public Accessibility lists only windows on the Spaces shown right now, and the window server also
 /// lists windows an app closed but keeps hidden, so neither tells a window on another Space from a
@@ -20,9 +20,10 @@ enum AXRemoteWindows {
 
     private static let ordinary: Set<String> = [kAXStandardWindowSubrole, kAXDialogSubrole, kAXSystemDialogSubrole]
 
-    /// Whether the app has an ordinary window or dialog; nil if that can't be told.
-    static func hasWindow(pid: pid_t) -> Bool? {
+    /// Which ordinary windows and dialogs the app has; nil if that can't be told.
+    static func windows(pid: pid_t) -> AppWindows? {
         guard let createWithToken else { return nil }
+        var found = AppWindows.none
         for id in UInt64(0)..<1000 {
             var token = Data(count: 20)
             token.withUnsafeMutableBytes { bytes in
@@ -37,7 +38,11 @@ enum AXRemoteWindows {
             var subrole: AnyObject?
             switch AXUIElementCopyAttributeValue(element, kAXSubroleAttribute as CFString, &subrole) {
             case .success:
-                if let subrole = subrole as? String, ordinary.contains(subrole) { return true }
+                guard let subrole = subrole as? String, ordinary.contains(subrole) else { break }
+                var minimized: AnyObject?
+                _ = AXUIElementCopyAttributeValue(element, kAXMinimizedAttribute as CFString, &minimized)
+                guard minimized as? Bool == true else { return .unminimized }
+                found = .minimized
             case .cannotComplete:
                 // The app doesn't answer.
                 return nil
@@ -45,6 +50,6 @@ enum AXRemoteWindows {
                 break
             }
         }
-        return false
+        return found
     }
 }

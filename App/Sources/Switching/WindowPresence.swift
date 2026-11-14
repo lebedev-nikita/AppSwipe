@@ -1,21 +1,32 @@
 import AppKit
 
-/// Which apps have windows, minimized or on any Space, for leaving out apps without them.
+/// Which windows an app has, on any Space.
+enum AppWindows: Sendable {
+    case none
+    /// Only minimized windows.
+    case minimized
+    /// At least one window that isn't minimized.
+    case unminimized
+}
+
+/// Which apps have windows, minimized or on any Space, for leaving out apps without them or with all
+/// of them minimized.
 ///
 /// The window server lists windows on every Space, but also windows an app closed and keeps hidden,
-/// and to it both look alike: not on screen. Accessibility tells them apart only on the Spaces shown
-/// right now. So an app whose windows are all off screen and unknown to Accessibility is checked on
-/// every Space in the background, which is slow, and the answer is kept until its window list changes
-/// or it gets old. Until the first answer, such an app counts as having windows.
+/// and to it both look alike: not on screen, just like minimized windows. Accessibility tells them
+/// apart only on the Spaces shown right now, and lists minimized windows from every Space. So an app
+/// whose off-screen windows aren't all known to Accessibility is checked on every Space in the
+/// background, which is slow, and the answer is kept until its window list changes or it gets old.
+/// Until the first answer, such an app counts as having a window that isn't minimized.
 @MainActor
 final class WindowPresence {
-    /// Called when a background check changes whether an app has windows.
+    /// Called when a background check changes which windows an app has.
     var onChange: () -> Void = {}
 
     private struct Answer {
         /// The off-screen windows the check saw.
-        let windows: Set<CGWindowID>
-        let hasWindows: Bool
+        let offScreen: Set<CGWindowID>
+        let windows: AppWindows
         let checkedAt: ContinuousClock.Instant
     }
 
@@ -32,8 +43,11 @@ final class WindowPresence {
         self.windowList = windowList
     }
 
-    /// The apps among `apps` without windows.
-    func appsWithoutWindows(among apps: [NSRunningApplication]) -> Set<pid_t> {
+    /// The apps among `apps` to leave out: those `withoutWindows` picks that have no windows, and, when
+    /// `minimized` is set, those whose windows are all minimized.
+    func appsToHide(
+        among apps: [NSRunningApplication], withoutWindows: (NSRunningApplication) -> Bool, minimized: Bool
+    ) -> Set<pid_t> {
         let windows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
             as? [[String: Any]] ?? []
         var onScreen: Set<pid_t> = []
@@ -52,34 +66,48 @@ final class WindowPresence {
         }
         answers = answers.filter { offScreen[$0.key] != nil }
         return Set(apps.filter { app in
+            let hidesWithoutWindows = withoutWindows(app)
+            guard hidesWithoutWindows || minimized else { return false }
             let pid = app.processIdentifier
             guard !onScreen.contains(pid) else { return false }
-            guard let candidates = offScreen[pid] else { return true }
+            guard let candidates = offScreen[pid] else { return hidesWithoutWindows }
             // Minimized windows, and windows of hidden apps on the Spaces shown.
-            guard windowList.windows(of: app).isEmpty else { return false }
-            return !hasWindows(pid: pid, offScreen: candidates)
+            let known = windowList.windows(of: app)
+            guard known.allSatisfy(\.isMinimized) else { return false }
+            if known.isEmpty {
+                // Minimized windows would be known, so the app has none.
+                guard hidesWithoutWindows else { return false }
+            } else {
+                guard minimized else { return false }
+                if candidates.isSubset(of: known.compactMap(\.id)) { return true }
+            }
+            switch self.windows(pid: pid, offScreen: candidates) {
+            case .none: return hidesWithoutWindows
+            case .minimized: return minimized
+            case .unminimized: return false
+            }
         }.map(\.processIdentifier))
     }
 
-    private func hasWindows(pid: pid_t, offScreen: Set<CGWindowID>) -> Bool {
-        let answer = answers[pid].flatMap { $0.windows == offScreen ? $0 : nil }
+    private func windows(pid: pid_t, offScreen: Set<CGWindowID>) -> AppWindows {
+        let answer = answers[pid].flatMap { $0.offScreen == offScreen ? $0 : nil }
         if answer.map({ clock.now - $0.checkedAt >= Self.answerLifetime }) ?? true {
             check(pid: pid, offScreen: offScreen)
         }
-        return answer?.hasWindows ?? true
+        return answer?.windows ?? .unminimized
     }
 
     private func check(pid: pid_t, offScreen: Set<CGWindowID>) {
         guard checking.insert(pid).inserted else { return }
         Task { [weak self] in
-            let hasWindows = await Task.detached(priority: .utility) {
-                AXRemoteWindows.hasWindow(pid: pid) ?? true
+            let windows = await Task.detached(priority: .utility) {
+                AXRemoteWindows.windows(pid: pid) ?? .unminimized
             }.value
             guard let self else { return }
             checking.remove(pid)
-            let shown = answers[pid].flatMap { $0.windows == offScreen ? $0.hasWindows : nil } ?? true
-            answers[pid] = Answer(windows: offScreen, hasWindows: hasWindows, checkedAt: clock.now)
-            if hasWindows != shown { onChange() }
+            let shown = answers[pid].flatMap { $0.offScreen == offScreen ? $0.windows : nil } ?? .unminimized
+            answers[pid] = Answer(offScreen: offScreen, windows: windows, checkedAt: clock.now)
+            if windows != shown { onChange() }
         }
     }
 }

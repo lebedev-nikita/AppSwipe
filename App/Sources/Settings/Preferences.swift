@@ -19,6 +19,7 @@ final class Preferences {
         static let excludedApps = "ExcludedApps"
         static let hideAppsWithoutWindows = "HideAppsWithoutWindows"
         static let hideFinderWithoutWindows = "HideFinderWithoutWindows"
+        static let hideMinimizedApps = "HideMinimizedApps"
         static let liveSwitching = "LiveSwitching"
         static let enlargeSelection = "EnlargeSelection"
         static let ignorePalms = "IgnorePalms"
@@ -51,6 +52,8 @@ final class Preferences {
     var hideFinderWithoutWindows: Bool {
         didSet { defaults.set(hideFinderWithoutWindows, forKey: Key.hideFinderWithoutWindows) }
     }
+    /// The App Switcher leaves out apps whose windows are all minimized, other than the Active App.
+    var hideMinimizedApps: Bool { didSet { defaults.set(hideMinimizedApps, forKey: Key.hideMinimizedApps) } }
     var liveSwitching: Bool { didSet { defaults.set(liveSwitching, forKey: Key.liveSwitching) } }
     /// Show the Selection by enlarging its Item instead of highlighting it.
     var enlargeSelection: Bool { didSet { defaults.set(enlargeSelection, forKey: Key.enlargeSelection) } }
@@ -94,6 +97,7 @@ final class Preferences {
         defaults.register(defaults: [
             Key.showMenuBarIcon: true,
             Key.stepLength: 8.0,
+            Key.hideMinimizedApps: true,
             Key.ignorePalms: true,
         ])
         showMenuBarIcon = defaults.bool(forKey: Key.showMenuBarIcon)
@@ -107,6 +111,7 @@ final class Preferences {
         hideAppsWithoutWindows = defaults.object(forKey: Key.hideAppsWithoutWindows) as? Bool
             ?? defaults.object(forKey: Key.hideFinderWithoutWindows) as? Bool ?? true
         hideFinderWithoutWindows = defaults.bool(forKey: Key.hideFinderWithoutWindows)
+        hideMinimizedApps = defaults.bool(forKey: Key.hideMinimizedApps)
         liveSwitching = defaults.bool(forKey: Key.liveSwitching)
         enlargeSelection = defaults.bool(forKey: Key.enlargeSelection)
         ignorePalms = defaults.bool(forKey: Key.ignorePalms)
