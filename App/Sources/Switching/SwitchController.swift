@@ -12,7 +12,7 @@ final class SwitchController {
     private struct AppContents {
         let apps: [NSRunningApplication]
         let preparedAt: ContinuousClock.Instant
-        /// The apps left out for having no windows.
+        /// The apps left out for having no windows or only minimized ones.
         let hidden: Set<pid_t>
         /// The displays the apps were listed from.
         let displays: DisplayScope
@@ -137,7 +137,7 @@ final class SwitchController {
             guard fingers == preferences.fingers else { return }
             // Apps on the pointer's display depend on where the pointer and the windows are now.
             if let contents, clock.now - contents.preparedAt < Self.appContentsLifetime,
-               contents.hidden == appsWithoutWindows(among: appOrder.apps()), contents.displays == .all,
+               contents.hidden == appsToHide(among: appOrder.apps()), contents.displays == .all,
                preferences.appDisplays == .all {
                 refreshBadges(apps: contents.apps, contents: contentsCount)
             } else {
@@ -222,16 +222,18 @@ final class SwitchController {
         return settings
     }
 
-    /// The apps among `apps` the App Switcher should leave out now: those without windows, minimized or
-    /// on any Space, other than the Active App, when set to hide all of them or just Finder.
-    private func appsWithoutWindows(among apps: [NSRunningApplication]) -> Set<pid_t> {
-        var apps = apps
-        if !preferences.hideAppsWithoutWindows {
-            guard preferences.hideFinderWithoutWindows else { return [] }
-            apps = apps.filter { $0.bundleIdentifier == "com.apple.finder" }
-        }
+    /// The apps among `apps` the App Switcher should leave out now, other than the Active App: those
+    /// without windows, minimized or on any Space, when set to hide all of them or just Finder, and
+    /// those whose windows are all minimized, when set to.
+    private func appsToHide(among apps: [NSRunningApplication]) -> Set<pid_t> {
         let front = appOrder.frontmost
-        return windowPresence.appsWithoutWindows(among: apps.filter { $0 != front })
+        return windowPresence.appsToHide(
+            among: apps.filter { $0 != front },
+            withoutWindows: { [preferences] app in
+                preferences.hideAppsWithoutWindows
+                    || preferences.hideFinderWithoutWindows && app.bundleIdentifier == "com.apple.finder"
+            },
+            minimized: preferences.hideMinimizedApps)
     }
 
     #if DEBUG
@@ -402,7 +404,7 @@ final class SwitchController {
         let started = clock.now
         let displays = preferences.appDisplays
         var apps = appOrder.apps()
-        let hidden = appsWithoutWindows(among: apps)
+        let hidden = appsToHide(among: apps)
         apps.removeAll { hidden.contains($0.processIdentifier) }
         if displays == .pointer { apps = Self.onPointerDisplay(apps) }
         let paths = apps.map { $0.bundleURL.map(DockBadges.path(of:)) }

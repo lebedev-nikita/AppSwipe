@@ -11,6 +11,16 @@
         }
       }
     },
+    "A window on another Space keeps the app shown.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Окно на другом рабочем столе оставляет приложение в списке."
+          }
+        }
+      }
+    },
     "Accessibility": {
       "localizations": {
         "ru": {
@@ -177,6 +187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Скрывать Finder, когда у него нет окон"
+          }
+        }
+      }
+    },
+    "Hide apps with all windows minimized": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывать приложения, у которых все окна свёрнуты"
           }
         }
       }

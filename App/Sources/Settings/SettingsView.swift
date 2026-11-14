@@ -173,6 +173,10 @@ struct SettingsView: View {
                 }
             }
             .disabled(preferences.hideAppsWithoutWindows)
+            Toggle(isOn: $preferences.hideMinimizedApps) {
+                Text("Hide apps with all windows minimized")
+                Text("A window on another Space keeps the app shown.")
+            }
         }
     }
 
